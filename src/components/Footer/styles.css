@@ -1,0 +1,14 @@
+/* C:\laragon\www\sgcpro\src\public\script\react_modelo_v1\frontend\src\components\Header\styles.css */
+
+.footer {
+    background: linear-gradient(to right, #330033, #14007A);
+    padding: 15px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .logo {
+    height: 36px;
+  }
+  

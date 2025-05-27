@@ -1,0 +1,45 @@
+/* C:\laragon\www\sgcpro\src\public\script\react_modelo_v1\frontend\src\styles\global.css*/
+
+
+/* 
+Este CSS deve ser adicionado ao seu arquivo principal para ajustar corretamente
+o espaçamento quando o header e footer estão em modo fixo ou normal.
+*/
+
+/* Ajuste para o conteúdo quando o header está fixo */
+.header.fixed+.main-content {
+    padding-top: 90px;
+    /* Altura do header + algum espaço */
+}
+
+/* Ajuste para o conteúdo quando o footer está fixo */
+.main-content:has(+ .footer.fixed) {
+    padding-bottom: 170px;
+    /* Altura do footer + algum espaço */
+}
+
+/* 
+Observação: Se o seu navegador não suportar o seletor :has, 
+você pode precisar adicionar/remover classes via JavaScript quando
+o estado fixed do footer mudar.
+
+Exemplo alternativo:
+*/
+
+/* Classe auxiliar para quando o footer está fixo */
+.has-fixed-footer {
+    padding-bottom: 170px;
+}
+
+/* Classe auxiliar para quando o header está fixo */
+.has-fixed-header {
+    padding-top: 90px;
+}
+
+.ms-200 {
+    margin-left: 200px !important;
+}
+
+.ms-50 {
+    margin-left: 50px !important;
+}
