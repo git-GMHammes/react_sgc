@@ -1,0 +1,124 @@
+/* Estilos gerais */
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Ajuste para o conteúdo principal ficar abaixo do navbar */
+.app-container {
+  padding-top: 56px; /* Altura do navbar superior */
+}
+
+/* ===== SIDEBAR STYLES ===== */
+.sidebar {
+  position: fixed;
+  top: 56px; /* Altura do navbar superior */
+  left: 0;
+  bottom: 0;
+  width: 250px;
+  height: calc(100vh - 56px);
+  transition: all 0.3s ease;
+  overflow-y: auto;
+  z-index: 1030; /* Menor que o navbar (1031) */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Sidebar quando está recolhido */
+.sidebar.collapsed {
+  width: 60px;
+}
+
+/* Links no sidebar recolhido */
+.sidebar.collapsed .nav-link {
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  justify-content: center;
+}
+
+/* Ícones no sidebar */
+.sidebar .nav-icon {
+  font-size: 1.2rem;
+  min-width: 25px;
+}
+
+/* NAVEGAÇÃO NO SIDEBAR */
+.nav-content {
+  padding: 0.5rem 0;
+}
+
+.sidebar .nav-link {
+  padding: 0.6rem 1rem;
+  margin: 0.1rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+}
+
+.sidebar .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .nav-link.active {
+  background-color: #0d6efd;
+}
+
+/* ===== MAIN CONTENT STYLES ===== */
+.main-content {
+  transition: margin-left 0.3s ease;
+  margin-left: 250px; /* Mesma largura do sidebar expandido */
+  min-height: calc(100vh - 56px - 57px); /* viewport - navbar - footer */
+}
+
+.main-content.menu-collapsed {
+  margin-left: 60px; /* Mesma largura do sidebar recolhido */
+}
+
+/* ===== MOBILE STYLES ===== */
+@media (max-width: 768px) {
+  /* Sidebar em dispositivos móveis */
+  .sidebar {
+    width: 280px;
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+  
+  /* Sidebar expandido em dispositivos móveis */
+  .sidebar.expanded {
+    transform: translateX(0);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Sidebar recolhido em dispositivos móveis (escondido) */
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 280px; /* Mantém a largura para animação suave */
+  }
+  
+  /* Conteúdo principal ocupa toda a largura em dispositivos móveis */
+  .main-content,
+  .main-content.menu-collapsed,
+  .main-content.menu-expanded {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+  
+  /* Sobreposição escura quando o menu está aberto */
+  .sidebar-overlay {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1025; /* Abaixo do sidebar, acima do conteúdo */
+    transition: opacity 0.3s;
+  }
+}
+
+/* Corrigir espaçamento em telas extra-pequenas */
+@media (max-width: 576px) {
+  .container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}

@@ -1,0 +1,96 @@
+/* C:\laragon\www\sgcpro\src\public\script\react_modelo_v1\frontend\src\components\Modal\blurModal\style.css */
+
+/* Animações que ainda estão ativas */
+@keyframes backdropBlurIn {
+    0% {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    100% {
+        opacity: 1;
+        backdrop-filter: blur(5px);
+    }
+}
+
+@keyframes blurFadeIn {
+    0% {
+        opacity: 0;
+        filter: blur(20px);
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+}
+
+/* Classes que ainda estão ativas */
+.modal-custom-blur.modal-lg {
+    min-width: 800px;
+    max-width: 80%;
+}
+
+/* Media query para responsividade */
+@media (max-width: 992px) {
+    .modal-custom-blur.modal-lg {
+        min-width: auto;
+        width: 90%;
+        max-width: 90%;
+    }
+}
+
+/* 
+-----------------------------------------
+CÓDIGO COMENTADO PARA REFERÊNCIA FUTURA
+-----------------------------------------
+
+.modal-overlay-blur {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 254, 254, 0.536);
+    z-index: 1000;
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    transition: opacity 3s ease, backdrop-filter 3s ease;
+    animation: backdropBlurIn 3s forwards;
+}
+
+.modal-custom-blur {
+    width: 100%;
+    max-width: 500px;
+    opacity: 0;
+    transform: scale(0.9);
+    filter: blur(20px);
+    background-color: var(--bs-body-bg);
+    border-radius: 5px;
+    box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
+    animation: blurFadeIn 0.6s forwards;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.modal-body {
+    padding: 1rem;
+}
+
+.modal-footer {
+    padding: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    border-top: 1px solid var(--bs-border-color);
+}
+*/
