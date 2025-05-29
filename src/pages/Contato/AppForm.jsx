@@ -25,29 +25,100 @@ const AppForm = ({
   const [toastMessages, setToastMessages] = useState([]);
   const [showUpdateData, setShowUpdateData] = useState([]);
 
-  // Configuração do formulário com react-hook-form
-  const { register, control, setValue, getValues, reset, formState: { errors }, handleSubmit } = useForm({
+  // Configuração do react-hook-form com validações
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors }
+  } = useForm({
+    // 
+    // Aqui estão as explicações das ferramentas que você está usando:
+    // 
+    // useForm: Hook principal da biblioteca que gerencia todo o estado do formulário
+    // register: Função para registrar campos no formulário
+    // control: Objeto necessário para campos controlados (usado com useWatch)
+    // setValue: Função para atualizar valores programaticamente
+    // getValues: Função para obter valores atuais do formulário
+    // reset: Função para limpar/resetar o formulário
+    // errors: Objeto que contém os erros de validação
+    // handleSubmit: Wrapper que processa a validação antes de chamar sua função de submissão
+    // useWatch: Hook para observar mudanças em campos específicos
+    // set: Utilitário para modificar estados aninhados (menos comum)
+
     defaultValues: {
       token_csrf: token_csrf,
-      id: '',
       pro_origem_id: '6',
       tipo: 'Contato',
+      active: 'Y',
       sigla_pronome_tratamento: '',
+      nome: '',
       cnpj_cpf: '',
-      tipo_email: '',
-      email: '',
-      tipo_numero: '',
-      numero: '',
-      created_at: '',
-      updated_at: '',
+      remember_token: '',
       created_by: '',
       created_by_name: '',
       updated_by: '',
       updated_by_name: '',
-      active: '',
-      deleted_at: ''
+      created_at: '',
+      updated_at: '',
+      deleted_at: '',
+      telefone_id: '',
+      telefone_cadastro_id: '',
+      telefone_favorito: '',
+      telefone_tipo: '',
+      telefone_numero: '',
+      email_id: '',
+      email_cadastro_id: '',
+      email_favorito: '',
+      email_tipo: '',
+      email_email: '',
+      email_created_by: '',
+      email_created_by_name: '',
+      email_updated_by: '',
+      email_updated_by_name: '',
+      endereco_id: '',
+      endereco_cadastro_id: '',
+      endereco_favorito: '',
+      endereco_cep: '',
+      endereco_tipo_logradouro: '',
+      endereco_logradouro: '',
+      endereco_numero: '',
+      endereco_complemento: '',
+      endereco_bairro: '',
+      endereco_cidade: '',
+      endereco_estado: '',
+      endereco_pais: '',
+      endereco_ponto_referencia: '',
+      endereco_latitude: '',
+      endereco_longitude: '',
+      endereco_regiao: '',
+      endereco_tipo_imovel: '',
+      endereco_informacao_acesso: '',
+      endereco_area_risco: '',
+      endereco_created_by: '',
+      endereco_created_by_name: '',
+      endereco_updated_by: '',
+      endereco_updated_by_name: '',
     }
   });
+
+  const onSubmit = (data) => {
+    console.log('Dados do formulário:', data);
+
+    // Simulação de envio para API
+    // Em um caso real, você faria uma chamada fetch/axios aqui
+
+    // Exibe mensagem de sucesso
+    setFormSuccess(true);
+
+    // Limpa o formulário após envio bem-sucedido
+    reset();
+
+    // Remove a mensagem de sucesso após 3 segundos
+    setTimeout(() => {
+      setFormSuccess(false);
+    }, 3000);
+  };
 
   const salvarContato = (data) => {
     fetchSave(data);
@@ -96,18 +167,23 @@ const AppForm = ({
   }
 
   const handlePhoneChange = (e) => {
-    const value = e.target.value;
-
-    setValue('numero', maskPhone(value));
-
-    const data = {
-      tel_numero: value,
-    };
-
-    setTimeout(() => {
-      fetchFilterPhone(data);
-    }, 100);
-
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 11) {
+      // Formatação básica: (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+      if (value.length > 2) {
+        value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
+      }
+      if (value.length > 10) {
+        const parts = value.split(' ');
+        if (parts.length > 1) {
+          const number = parts[1];
+          if (number.length > 5) {
+            value = `(${parts[0].substring(1)}) ${number.substring(0, number.length - 4)}-${number.substring(number.length - 4)}`;
+          }
+        }
+      }
+      setValue('numero', value, { shouldValidate: true });
+    }
   };
 
   const handlePhoneBlur = async (e) => {
@@ -120,7 +196,6 @@ const AppForm = ({
 
     console.log('data:', data);
 
-
     const getPhone = await fetchFilterPhone(data);
     if (
       getPhone[0] !== undefined &&
@@ -128,7 +203,6 @@ const AppForm = ({
     ) {
       console.log('getPhone:', getPhone);
       addToast('Cuidado', 'Telefone já foi cadastrado no Sistema!', 'warning', 5000);
-
     }
   };
 
@@ -151,7 +225,6 @@ const AppForm = ({
       console.log('getEmail:', getEmail);
       addToast('Cuidado', 'E-mail já foi cadastrado no Sistema!', 'warning', 5000);
     }
-
   };
 
   const clearAllToasts = () => {
@@ -184,7 +257,7 @@ const AppForm = ({
     setConfirmationMessage(`/ ${Headermessage}`);
     setDefaultHeader(Headerdefault);
     return null;
-  }
+  };
 
   const fetchSecretarias = async () => {
     try {
@@ -213,12 +286,12 @@ const AppForm = ({
   const fetchFilterPhone = async (data) => {
     const response = await TelefoneService.postFilter(data);
     return response;
-  }
+  };
 
   const fetchFilterMail = async (data) => {
     const response = await EmailService.postFilter(data);
     return response;
-  }
+  };
 
   const fetchSave = async (data) => {
     console.log('fetchSave/data ::', data);
@@ -289,10 +362,10 @@ const AppForm = ({
       // console.log('dadosIniciais:', dadosIniciais);
     } else {
       let dadosIniciais = {
-        remember_token: updateData.cad_remember_token || token_csrf,
-        token_csrf: updateData.cad_token_csrf || token_csrf,
-        pro_origem_id: updateData.pro_origem_id || '6',
-        tipo: updateData.cad_tipo || 'Contato',
+        remember_token: token_csrf,
+        token_csrf: token_csrf,
+        pro_origem_id: '6',
+        tipo: 'Contato',
       };
       reset(dadosIniciais);
     }
@@ -347,132 +420,170 @@ const AppForm = ({
 
   const renderCampoTextSigla = () => {
     return (
-      <div className="form-group">
-        <label htmlFor="formSigla" className="form-label">Sigla *</label>
-        <select
-          className={`form-select ${errors.sigla_pronome_tratamento ? 'is-invalid' : ''}`}
-          id="formSec"
-          name='sigla_pronome_tratamento'
-          value={getValues('sigla_pronome_tratamento')}
-          {...register('sigla_pronome_tratamento', { required: 'Secretaria é obrigatório' })}
+      <>
+        <form
+          className="nav-item"
+          onSubmit={handleSubmit(onSubmit)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
         >
-          <option value="">Selecione o tipo</option>
-          {loading ? (
-            <option>Carregando...</option>
-          ) : (
-            secretarias.map((sec, index) => (
-              <option key={index} value={sec.id}>
-                {`${debugMyPrint ? sec.id : ''}`} - {sec.cad_sigla_pronome_tratamento}
-              </option>
-            ))
-          )}
-        </select>
-        {errors.sigla_pronome_tratamento && (
-          <div className="invalid-feedback">
-            {errors.sigla_pronome_tratamento.message}
+          <div className="form-group">
+            <label htmlFor="formSigla" className="form-label">Sigla *</label>
+            <select
+              className={`form-select ${errors.sigla_pronome_tratamento ? 'is-invalid' : ''}`}
+              id="formSec"
+              {...register('sigla_pronome_tratamento', { required: 'Secretaria é obrigatório' })}
+            >
+              <option value="">Selecione o tipo</option>
+              {loading ? (
+                <option>Carregando...</option>
+              ) : (
+                secretarias.map((sec, index) => (
+                  <option key={index} value={sec.id}>
+                    {`${debugMyPrint ? sec.id : ''}`} - {sec.cad_sigla_pronome_tratamento}
+                  </option>
+                ))
+              )}
+            </select>
+            {errors.sigla_pronome_tratamento && (
+              <div className="invalid-feedback">
+                {errors.sigla_pronome_tratamento.message}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </form>
+      </>
     );
   }
 
   const renderCampoTextNome = () => {
     return (
-      <div className="form-group">
-        <label htmlFor="formNome" className="form-label">Nome *</label>
-        <input
-          type="text"
-          className={`form-control ${errors.nome ? 'is-invalid' : ''}`}
-          id="formNome"
-          {...register('nome', { required: 'Nome é obrigatório' })}
-        />
-        {errors.nome && (
-          <div className="invalid-feedback">
-            {errors.nome.message}
-          </div>
-        )}
-      </div>
+      <>
+        <div className="form-group">
+
+          <label
+            className="form-label"
+            htmlFor="nome"
+          >
+            Nome *
+          </label>
+          <input
+            type="text"
+            id="nome"
+            {...register("nome", {
+              required: "Nome é obrigatório",
+              minLength: {
+                value: 3,
+                message: "Nome deve ter pelo menos 3 caracteres"
+              }
+            })}
+            className={errors.nome ? "input-error" : ""}
+          />
+          {errors.nome && <span className="error-message">{errors.nome.message}</span>}
+
+        </div>
+      </>
     );
   }
 
   const renderCampoRadioAtivo = () => {
     return (
-      <div className="form-group">
-        <label htmlFor="formActive" className="form-label">Ativo *</label>
-        <select
-          className="form-select"
-          id="formActive"
-          value={getValues('active')}
-          {...register('active', { required: 'Ativo é obrigatório' })}
-        >
-          <option value="Y">Sim</option>
-          <option value="N">Não</option>
-        </select>
-        {errors.active && (
-          <div className="invalid-feedback">
-            {errors.active.message}
-          </div>
-        )}
-      </div>
+      <>
+        <div className="form-group">
+          <label htmlFor="formActive" className="form-label">Ativo *</label>
+          <select
+            className={`form-select ${errors.active ? 'is-invalid' : ''}`}
+            id="formActive"
+            {...register('active', { required: 'Ativo é obrigatório' })}
+          >
+            <option value="Y">Sim</option>
+            <option value="N">Não</option>
+          </select>
+          {errors.active && (
+            <div className="invalid-feedback">
+              {errors.active.message}
+            </div>
+          )}
+        </div>
+      </>
     );
   }
 
   const renderCampoMailEmail = () => {
     return (
-      <div className="form-group">
-        <label htmlFor="formEmail" className="form-label">Email *</label>
-        <input
-          type="mail"
-          className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-          id="formEmail"
-          {...register('email', { required: 'Email é obrigatório' })}
-          onBlur={handleEmailBlur}
-        />
-        {errors.email && (
-          <div className="invalid-feedback">
-            {errors.email.message}
-          </div>
-        )}
-      </div>
+      <>
+        <div className="form-group">
+
+          <label
+            className="form-label"
+            htmlFor="email"
+          >
+            Email *
+          </label>
+          <input
+            type="email"
+            id="email"
+            {...register("email", {
+              required: "Email é obrigatório",
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: "Endereço de email inválido"
+              }
+            })}
+            className={errors.email ? "input-error" : ""}
+          />
+          {errors.email && <span className="error-message">{errors.email.message}</span>}
+
+        </div>
+      </>
     );
   }
 
   const renderCampoSelectTipoEmail = () => {
     return (
       <>
-        <label htmlFor="formTipEmail" className="form-label">Tipo de Email *</label>
-        <select
-          className={`form-select ${errors.tipo_email ? 'is-invalid' : ''}`}
-          id="formSec"
-          value={getValues('tipo_email')}
-          {...register('tipo_email', { required: 'Tipo de Email é obrigatório' })}
-        >
-          <option value="">Selecione o tipo</option>
-          <option value="Pessoal">Pessoal</option>
-          <option value="Institucional">Institucional</option>
-          <option value="Recado">Recado</option>
-        </select>
-        {errors.tipo_email && (
-          <div className="invalid-feedback">
-            {errors.tipo_email.message}
-          </div>
-        )}
+        <div className="form-group">
+          <label htmlFor="formTipEmail" className="form-label">Tipo de Email *</label>
+          <select
+            className={`form-select ${errors.tipo_email ? 'is-invalid' : ''}`}
+            id="formTipEmail"
+            {...register('tipo_email', { required: 'Tipo de Email é obrigatório' })}
+          >
+            <option value="">Selecione o tipo</option>
+            <option value="Pessoal">Pessoal</option>
+            <option value="Institucional">Institucional</option>
+            <option value="Recado">Recado</option>
+          </select>
+          {errors.tipo_email && (
+            <div className="invalid-feedback">
+              {errors.tipo_email.message}
+            </div>
+          )}
+        </div>
       </>
     );
   }
 
   const renderCampoTextTelefone = () => {
     return (
+
       <div className="form-group">
         <label htmlFor="formTel" className="form-label">Telefone *</label>
         <input
           type="text"
           className={`form-control ${errors.numero ? 'is-invalid' : ''}`}
           id="formTel"
-          name='numero'
-          {...register('numero', { required: 'Telefone é obrigatório' })}
+          {...register('numero', {
+            required: 'Telefone é obrigatório',
+            pattern: {
+              value: /^\(\d{2}\)\s\d{4,5}-\d{4}$/,
+              message: "Telefone inválido. Use o formato (XX) XXXXX-XXXX"
+            }
+          })}
           onChange={handlePhoneChange}
-          onBlur={handlePhoneBlur}
         />
         {errors.numero && (
           <div className="invalid-feedback">
@@ -480,91 +591,98 @@ const AppForm = ({
           </div>
         )}
       </div>
+
     );
-  }
+  };
 
   const renderCampoSelectTipoTelefone = () => {
     return (
       <>
-        <label htmlFor="formTipEmail" className="form-label">Tipo de Telefone *</label>
-        <select
-          className={`form-select ${errors.tipo_numero ? 'is-invalid' : ''}`}
-          id="formSec"
-          value={getValues('tipo_numero')}
-          {...register('tipo_numero', { required: 'Tipo de Telefone é obrigatório' })}
-        >
-          <option value="">Selecione o tipo</option>
-          <option value="Pessoal">Pessoal</option>
-          <option value="Institucional">Institucional</option>
-          <option value="Recado">Recado</option>
-        </select>
-        {errors.tipo_numero && (
-          <div className="invalid-feedback">
-            {errors.tipo_numero.message}
-          </div>
-        )}
+
+        <div className="form-group">
+          <label htmlFor="formTipoTelefone" className="form-label">Tipo de Telefone *</label>
+          <select
+            className={`form-select ${errors.tipo_numero ? 'is-invalid' : ''}`}
+            id="formTipoTelefone"
+            {...register('tipo_numero', { required: 'Tipo de Telefone é obrigatório' })}
+          >
+            <option value="">Selecione o tipo</option>
+            <option value="Pessoal">Pessoal</option>
+            <option value="Institucional">Institucional</option>
+            <option value="Recado">Recado</option>
+          </select>
+          {errors.tipo_numero && (
+            <div className="invalid-feedback">
+              {errors.tipo_numero.message}
+            </div>
+          )}
+        </div>
+
       </>
     );
-  }
+  };
 
   const renderRowLogForm = () => {
     return (
-      <div className="row mb-3">
-        <div className="col-md-3">
-          <div className="form-group">
-            <label htmlFor="formCreatedBy" className="form-label">Criado por</label>
-            <input
-              type="text"
-              className="form-control bg-secondary"
-              id="formCreatedBy"
-              disabled
-              {...register('created_by_name')}
-            />
+      <>
+
+        <div className="row mb-3">
+          <div className="col-md-3">
+            <div className="form-group">
+              <label htmlFor="formCreatedBy" className="form-label">Criado por</label>
+              <input
+                type="text"
+                className="form-control bg-secondary"
+                id="formCreatedBy"
+                disabled
+                {...register('created_by_name')}
+              />
+            </div>
+          </div>
+
+          <div className="col-md-3">
+            <div className="form-group">
+              <label htmlFor="formCreatedAt" className="form-label">Data de criação</label>
+              <input
+                type="text"
+                className="form-control bg-secondary"
+                id="formCreatedAt"
+                disabled
+                {...register('created_at')}
+              />
+            </div>
+          </div>
+
+          <div className="col-md-3">
+            <div className="form-group">
+              <label htmlFor="formUpdatedBy" className="form-label">Atualizado por</label>
+              <input
+                type="text"
+                className="form-control bg-secondary"
+                id="formUpdatedBy"
+                disabled
+                {...register('updated_by_name')}
+              />
+            </div>
+          </div>
+
+          <div className="col-md-3">
+            <div className="form-group">
+              <label htmlFor="formUpdatedAt" className="form-label">Data de atualização</label>
+              <input
+                type="text"
+                className="form-control bg-secondary"
+                id="formUpdatedAt"
+                disabled
+                {...register('updated_at')}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="col-md-3">
-          <div className="form-group">
-            <label htmlFor="formCreatedAt" className="form-label">Data de criação</label>
-            <input
-              type="text"
-              className="form-control bg-secondary"
-              id="formCreatedAt"
-              disabled
-              {...register('created_at')}
-            />
-          </div>
-        </div>
-
-        <div className="col-md-3">
-          <div className="form-group">
-            <label htmlFor="formUpdatedBy" className="form-label">Atualizado por</label>
-            <input
-              type="text"
-              className="form-control bg-secondary"
-              id="formUpdatedBy"
-              disabled
-              {...register('updated_by_name')}
-            />
-          </div>
-        </div>
-
-        <div className="col-md-3">
-          <div className="form-group">
-            <label htmlFor="formUpdatedAt" className="form-label">Data de atualização</label>
-            <input
-              type="text"
-              className="form-control bg-secondary"
-              id="formUpdatedAt"
-              disabled
-              {...register('updated_at')}
-            />
-          </div>
-        </div>
-
-      </div>
+      </>
     );
-  }
+  };
 
   const renderButtonCommands = () => {
     return (
@@ -585,7 +703,7 @@ const AppForm = ({
 
         <form
           className="nav-item"
-          onSubmit={handleSubmit(salvarContato)}
+          onSubmit={handleSubmit(onSubmit)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -598,7 +716,7 @@ const AppForm = ({
         </form>
       </>
     );
-  }
+  };
 
   return (
     <div className="form-container">
@@ -619,7 +737,7 @@ const AppForm = ({
             <div className="card-body">
               <form
                 className="nav-item"
-                onSubmit={handleSubmit(salvarContato)}
+                onSubmit={handleSubmit(onSubmit)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -666,13 +784,11 @@ const AppForm = ({
                 {/* ROW DADOS DE LOG */}
                 {renderRowLogForm()}
 
+                <div className="d-flex justify-content-end mt-4">
+                  {/* COMANDOS */}
+                  {renderButtonCommands()}
+                </div>
               </form>
-
-              <div className="d-flex justify-content-end mt-4">
-                {/* COMANDOS */}
-                {renderButtonCommands()}
-              </div>
-
             </div>
             <div className="card-footer text-muted">
               <small>* Campos obrigatórios</small>
@@ -704,7 +820,6 @@ const AppForm = ({
 
     </div>
   );
-
 };
 
 export default AppForm;

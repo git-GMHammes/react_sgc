@@ -1,19 +1,21 @@
-// src\public\script\react_modelo_v1\frontend\src\pages\Empresa\AppForm.jsx
+// C:\laragon\www\sgcpro\src\public\script\react_modelo_v1\frontend\src\pages\Empresa\AppForm.jsx
 import React, { useEffect, useState } from 'react';
 import Loading from '../../components/Loading';
-import { useForm, useWatch } from 'react-hook-form';
+import { set, useForm, useWatch } from 'react-hook-form';
 import EmpresaService from '../../services/empresa';
 import OrigemService from '../../services/origem';
 import ToastsReact from '../../components/Message/Toasts';
 import { Alert, Spinner } from 'react-bootstrap';
+import "bootstrap/dist/css/bootstrap.min.css";
+import { start } from '@popperjs/core';
 
 const AppForm = ({
   token_csrf = {},
   getID = null
 }) => {
 
+  const [origens, setOrigens] = useState([]);
   const [tokenCsrf, setTokenCsrf] = useState('');
-  const [opcoesOrigem, setOpcoesOrigem] = useState([]);
   const [loading, setLoading] = useState(true);
   const [defaultHeader, setDefaultHeader] = useState('primary');
   const [confirmationMessage, setConfirmationMessage] = useState('');
@@ -141,6 +143,17 @@ const AppForm = ({
     // console.log('Salvando empresa:', data);
   };
 
+  const limparFormulario = () => {
+    reset();
+    // console.log('Formulário limpo');
+  };
+
+  const setUpFormHeader = async (Headermessage, Headerdefault) => {
+    setConfirmationMessage(`/ ${Headermessage}`);
+    setDefaultHeader(Headerdefault);
+    return null;
+  };
+
   const cadastrarEmpresa = async (formData) => {
     try {
 
@@ -172,36 +185,217 @@ const AppForm = ({
     }
   };
 
-  const limparFormulario = () => {
-    reset();
-    // console.log('Formulário limpo');
+  const setUpToastMessage = async (toastMessage, toastStrong, toastVariant) => {
+
+    setMessageToast(toastMessage);
+
+    setTimeout(() => {
+      if (messageToast !== '...') {
+        setCustomToasts(prev => [
+          {
+            ...prev[0],
+            title: "Cadastro de Cobranca",
+            strong: toastStrong,
+            time: "agora",
+            delay: 1000,
+            variant: toastVariant,
+            opacity: "25",
+            renderChildren: () => (
+              <div className="d-flex align-items-center">
+                <i className="bi bi-check-circle me-2"></i>
+                <span>{messageToast}</span>
+              </div>
+            )
+          }
+        ]);
+      }
+    }, 300);
+    setShowToast(true);
+
+    return null;
+  };
+
+  const fetchOrigens = async () => {
+    try {
+      setLoading(true);
+      const response = await OrigemService.getAll(1, 100); // isso retorna a lista do banco
+      console.log("Origens encontradas:", response); // Verificar o que está vindo
+      setOrigens(response);
+    } catch (error) {
+      console.error('Erro ao buscar origens:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchGetById = async (id = getID) => {
+    try {
+      const response = await EmpresaService.getById(id);
+      console.log('fetchGetById/Cliente:', response);
+      return response;
+
+    } catch (error) {
+      console.error('Erro empresa:', error);
+    }
+  };
+
+  const fetchSave = async (data) => {
+    try {
+      setLoading(false);
+
+      const response = await EmpresaService.postSave(data);
+      // console.log('Resposta do postFilter:', response);
+
+      setUpFormHeader('Erro ao salvar os Dados', 'danger');
+
+      setUpFormHeader('Dados salvos com sucesso', 'success');
+
+      setUpToastMessage('Origem salvo com sucesso!', 'Sucesso', 'success');
+
+      setUpToastMessage('Erro ao salvar os Dados', 'Erro', 'danger');
+
+      if (response.length > 0) {
+        setLista(response);
+      }
+
+      setLoading(false);
+
+    } catch (err) {
+      console.error('Erro filtro:', err);
+      setLoading(false);
+    }
+  };
+
+  const carregarToken = async () => {
+    const resultado = await EmpresaService.getEndPoint();
+    if (resultado && resultado.token_csrf) {
+      setTokenCsrf(resultado.token_csrf);
+    } else {
+      alert('Erro ao obter token CSRF.');
+    }
+  };
+
+  const registerform = async () => {
+
+    if (getID) {
+      const updateData = await fetchGetById(getID);
+      console.log('updateData :: ', updateData);
+
+      if (updateData) {
+        let dadosIniciais = {
+          token_csrf: token_csrf || 'erro',
+          id: updateData.id || '',
+          cad_pro_origem_id: updateData.cad_pro_origem_id || '',
+          cad_tipo: updateData.cad_tipo || '',
+          cad_active: updateData.cad_active || 'Y',
+          cad_sigla_pronome_tratamento: updateData.cad_sigla_pronome_tratamento || '',
+          cad_nome: updateData.cad_nome || '',
+          cad_cnpj_cpf: updateData.cad_cnpj_cpf || '',
+          cad_remember_token: updateData.cad_remember_token || token_csrf,
+          cad_created_by: updateData.cad_created_by || '0',
+          cad_created_by_name: updateData.cad_created_by_name || 'unknown',
+          cad_updated_by: updateData.cad_updated_by || '0',
+          cad_updated_by_name: updateData.cad_updated_by_name || 'unknown',
+
+          orig_id: updateData.orig_id || '4',
+          orig_created_by: updateData.orig_created_by || '0',
+          orig_created_by_name: updateData.orig_created_by_name || 'unknown',
+          orig_updated_by: updateData.orig_updated_by || '0',
+          orig_updated_by_name: updateData.orig_updated_by_name || 'unknown',
+
+          mail_favorito: updateData.mail_favorito || 'Y',
+          mail_cadastro_id: updateData.mail_cadastro_id || '',
+          mail_created_by: updateData.mail_created_by || '0',
+          mail_created_by_name: updateData.mail_created_by_name || 'unknown',
+          mail_updated_by: updateData.mail_updated_by || '0',
+          mail_updated_by_name: updateData.mail_updated_by_name || 'unknown',
+
+          tel_favorito: updateData.tel_favorito || 'Y',
+          tel_cadastro_id: updateData.tel_cadastro_id || '',
+          tel_created_by: updateData.tel_created_by || '0',
+          tel_created_by_name: updateData.tel_created_by_name || 'unknown',
+          tel_updated_by: updateData.tel_updated_by || '0',
+          tel_updated_by_name: updateData.tel_updated_by_name || 'unknown',
+
+          end_favorito: updateData.end_favorito || 'Y',
+          end_created_by: updateData.end_created_by || '0',
+          end_created_by_name: updateData.end_created_by_name || 'unknown',
+          end_updated_by: updateData.end_updated_by || '0',
+          end_updated_by_name: updateData.end_updated_by_name || 'unknown',
+
+          created_at: updateData.created_at || '',
+          updated_at: updateData.updated_at || '',
+          deleted_at: updateData.deleted_at || null
+        };
+        reset(dadosIniciais);
+      }
+    } else {
+      reset({
+        token_csrf: token_csrf,
+        id: '',
+        cad_pro_origem_id: '',
+        cad_tipo: '',
+        cad_active: '',
+        cad_sigla_pronome_tratamento: '',
+        cad_nome: '',
+        cad_cnpj_cpf: '',
+        cad_remember_token: '',
+        cad_created_by: '',
+        cad_created_by_name: '',
+        cad_updated_by: '',
+        cad_updated_by_name: '',
+
+        orig_id: '',
+        orig_created_by: '',
+        orig_created_by_name: '',
+        orig_updated_by: '',
+        orig_updated_by_name: '',
+
+        mail_favorito: '',
+        mail_cadastro_id: '',
+        mail_created_by: '',
+        mail_created_by_name: '',
+        mail_updated_by: '',
+        mail_updated_by_name: '',
+
+        tel_favorito: '',
+        tel_cadastro_id: '',
+        tel_created_by: '',
+        tel_created_by_name: '',
+        tel_updated_by: '',
+        tel_updated_by_name: '',
+
+        end_favorito: '',
+        end_created_by: '',
+        end_created_by_name: '',
+        end_updated_by: '',
+        end_updated_by_name: '',
+
+        created_at: '',
+        updated_at: '',
+        deleted_at: ''
+      });
+    }
   };
 
   // Formatar CNPJ/CPF
   useEffect(() => {
+    try {
+      const startData = async () => {
+        await fetchOrigens();
+        await registerform();
+      };
 
-    const fetchOrigens = async () => {
-      try {
-        const data = await OrigemService.getAll(1, 100); // isso retorna a lista do banco
-        setOpcoesOrigem(data);
-      } catch (error) {
-        console.error('Erro ao buscar origens:', error);
-      }
-    };
+      startData();
 
-    const carregarToken = async () => {
-      const resultado = await EmpresaService.getEndPoint();
+    } catch (error) {
+      console.error('Erro no useEffect:', error);
 
-      if (resultado && resultado.token_csrf) {
-        setTokenCsrf(resultado.token_csrf);
-      } else {
-        alert('Erro ao obter token CSRF.');
-      }
-    };
+    } finally {
+      console.log('#useEffect finalizado');
+    }
 
     carregarToken();
-
-    fetchOrigens();
 
     if (cnpjCpfValue) {
       // Remover todos os caracteres não numéricos
@@ -234,6 +428,32 @@ const AppForm = ({
       }
     }
   }, [cnpjCpfValue, setValue]);
+
+  useEffect(() => {
+
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  seEffect(() => {
+
+    const initializeData = async () => {
+      try {
+        registerform();
+
+      } catch (err) {
+        console.error('Erro na inicialização dos dados:', err);
+
+      } finally {
+        console.log('#useEffect finalizado');
+      }
+    };
+
+    initializeData();
+  }, [reset]);
 
   // Função para formatar CNPJ/CPF durante a digitação
   const handleCnpjCpfChange = (e) => {
@@ -278,55 +498,6 @@ const AppForm = ({
     // console.log('Ação cancelar');
   };
 
-  const fetchGetById = async (id = getID) => {
-    try {
-      const response = await EmpresaService.getById(id);
-      return response;
-
-    } catch (err) {
-      console.error('Erro:', err);
-    }
-  };
-
-  const fetchSave = async (data) => {
-    try {
-      setLoading(false);
-
-      const response = await EmpresaService.postSave(data);
-      // console.log('Resposta do postFilter:', response);
-      setConfirmationMessage('/ Erro ao salvar os Dados');
-      // setDefaultHeader('success'); 
-      setDefaultHeader('danger');
-      setMessageToast('Empresa salva com sucesso!');
-      setCustomToasts(prev => [
-        {
-          ...prev[0],
-          title: "Cadastro de Empresa",
-          strong: "Sucesso",
-          time: "agora",
-          delay: 1000,
-          variant: "success",
-          opacity: "25",
-          renderChildren: () => (
-            <div className="d-flex align-items-center">
-              <i className="bi bi-check-circle me-2"></i>
-              <span>{messageToast}</span>
-            </div>
-          )
-        }
-      ]);
-      setShowToast(true);
-
-      if (response.length > 0) {
-        setLista(response);
-      }
-      setLoading(false);
-    } catch (err) {
-      console.error('Erro filtro:', err);
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
 
     const timer = setTimeout(() => {
@@ -335,53 +506,6 @@ const AppForm = ({
 
     return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-
-    const initializeData = async () => {
-      try {
-        const updateData = await fetchGetById();
-        // console.log('updateData :: ', updateData)
-
-        if (updateData) {
-          let dadosIniciais = {
-            token_csrf: token_csrf,
-            id: updateData.id || '',
-            pro_origem_id: updateData.cad_pro_origem_id || '',
-            tipo: updateData.cad_tipo || '',
-            active: updateData.cad_active || 'Y',
-            sigla_pronome_tratamento: updateData.cad_sigla_pronome_tratamento || '',
-            nome: updateData.cad_nome || '',
-            cnpj_cpf: updateData.cad_cnpj_cpf || '',
-            remember_token: updateData.cad_remember_token || token_csrf,
-            created_by: updateData.cad_created_by || '0',
-            created_by_name: updateData.cad_created_by_name || 'unknown',
-            updated_by: updateData.cad_updated_by || '0',
-            updated_by_name: updateData.cad_updated_by_name || 'unknown',
-            created_at: updateData.created_at || '',
-            updated_at: updateData.updated_at || '',
-            deleted_at: updateData.deleted_at || null
-          };
-          // console.log('dadosIniciais :: ', dadosIniciais)
-          reset(dadosIniciais);
-        } else {
-          let dadosIniciais = {
-            remember_token: updateData.cad_remember_token || token_csrf,
-          };
-          reset(dadosIniciais);
-        }
-
-      } catch (err) {
-        console.error('Erro na inicialização dos dados:', err);
-
-      } finally {
-        // console.log('useEffect finalizado');
-      }
-    };
-
-    initializeData();
-  }, [reset]);
-
 
   return (
     <div className="form-container">

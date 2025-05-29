@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import Loading from '../../components/Loading';
 import { set, useForm, useWatch } from 'react-hook-form';
 import ContratoService from '../../services/contrato';
+import SecretariaService from '../../services/secretaria';
 import ToastsReact from '../../components/Message/Toasts';
+import JSONViewer from '../../components/JSONViewer';
 import { Alert, Spinner } from 'react-bootstrap';
 import "bootstrap/dist/css/bootstrap.min.css";
 import { start } from '@popperjs/core';
@@ -12,30 +14,14 @@ const AppForm = ({
   token_csrf = {},
   getID = null
 }) => {
-
+  const [debugMyPrint, setDebugMyPrint] = useState(true);
   const [secretarias, setSecretarias] = useState([]);
   const [tokenCsrf, setTokenCsrf] = useState('');
   const [loading, setLoading] = useState(true);
   const [defaultHeader, setDefaultHeader] = useState('primary');
   const [confirmationMessage, setConfirmationMessage] = useState('');
-  const [messageToast, setMessageToast] = useState('...');
-  const [showToast, setShowToast] = useState(false);
-  const [customToasts, setCustomToasts] = useState([
-    {
-      title: "Toast com Spinner",
-      strong: "Processando",
-      time: "agora",
-      variant: "info",
-      opacity: "25",
-      // Em vez de fornecer o JSX diretamente, use uma função
-      renderChildren: () => (
-        <div className="d-flex align-items-center">
-          <Spinner animation="border" size="sm" className="me-2" />
-          <span>{messageToast}</span>
-        </div>
-      )
-    }
-  ]);
+  const [toastMessages, setToastMessages] = useState([]);
+  const [showUpdateData, setShowUpdateData] = useState([]);
 
   // Configuração do formulário com react-hook-form
   const { register, control, setValue, getValues, reset, formState: { errors }, handleSubmit } = useForm({
@@ -287,18 +273,203 @@ const AppForm = ({
     initializeData();
   }, [reset]);
 
+  const renderCampoSelectSecretaria = () => {
+    return (
+      <>
+        <label htmlFor="formSec" className="form-label">Secretaria*</label>
+        <select
+          className={`form-select ${errors.cad_sigla_pronome_tratamento ? 'is-invalid' : ''}`}
+          id="formSec"
+          {...register('cad_sigla_pronome_tratamento', { required: 'Secretaria é obrigatório' })}
+        >
+          <option value="">Selecione o tipo</option>
+          {loading ? (
+            <option>Carregando...</option>
+          ) : (
+            secretarias.map((sec) => (
+              <option key={sec.id} value={sec.id}>
+                {sec.cad_sigla_pronome_tratamento} - {sec.cad_tipo} - {sec.cad_pro_origem_id}
+              </option>
+            ))
+          )}
+        </select>
+        {errors.cad_sigla_pronome_tratamento && (
+          <div className="invalid-feedback">
+            {errors.cad_sigla_pronome_tratamento.message}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  const renderCampoTextSei = () => {
+    return (
+      <div className="form-group">
+        <label htmlFor="formSei" className="form-label">SEI*</label>
+        <input
+          type="text"
+          className={`form-control ${errors.cont_sei ? 'is-invalid' : ''}`}
+          id="formSei"
+          {...register('cont_sei', { required: 'SEI é obrigatório' })}
+        />
+        {errors.cont_sei && (
+          <div className="invalid-feedback">
+            {errors.cont_sei.message}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const renderCampoDataInicio = () => {
+    return (
+      <div className="form-group">
+        <label htmlFor="formData1" className="form-label">Data Início*</label>
+        <input
+          type="date"
+          className={`form-control ${errors.cont_data_inicio ? 'is-invalid' : ''}`}
+          id="formData1"
+          {...register('cont_data_inicio', { required: 'Data Início é obrigatório' })}
+        />
+        {errors.cont_data_inicio && (
+          <div className="invalid-feedback">
+            {errors.cont_data_inicio.message}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const renderCampoDataFim = () => {
+    return (
+      <div className="form-group">
+        <label htmlFor="formData2" className="form-label">Data Fim*</label>
+        <input
+          type="date"
+          className={`form-control ${errors.cont_data_fim ? 'is-invalid' : ''}`}
+          id="formData2"
+          {...register('cont_data_fim', { required: 'Data Fim é obrigatório' })}
+        />
+        {errors.cont_data_fim && (
+          <div className="invalid-feedback">
+            {errors.cont_data_fim.message}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const renderRowLogForm = () => {
+    return (
+      <div className="row mb-3">
+        <div className="col-md-3">
+          <div className="form-group">
+            <label htmlFor="formToken" className="form-label">Token</label>
+            <input
+              type="text"
+              className="form-control font-monospace"
+              id="formToken"
+              disabled
+              {...register('remember_token')}
+            />
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="form-group">
+            <label htmlFor="formCreatedBy" className="form-label">Criado por</label>
+            <input
+              type="text"
+              className="form-control bg-secondary"
+              id="formCreatedBy"
+              disabled
+              {...register('created_by_name')}
+            />
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="form-group">
+            <label htmlFor="formCreatedAt" className="form-label">Data de criação</label>
+            <input
+              type="text"
+              className="form-control bg-secondary"
+              id="formCreatedAt"
+              disabled
+              {...register('created_at')}
+            />
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="form-group">
+            <label htmlFor="formUpdatedBy" className="form-label">Atualizado por</label>
+            <input
+              type="text"
+              className="form-control bg-secondary"
+              id="formUpdatedBy"
+              disabled
+              {...register('updated_by_name')}
+            />
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="form-group">
+            <label htmlFor="formUpdatedAt" className="form-label">Data de atualização</label>
+            <input
+              type="text"
+              className="form-control bg-secondary"
+              id="formUpdatedAt"
+              disabled
+              {...register('updated_at')}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderButtonCommands = () => {
+    return (
+      <>
+        <form
+          className="nav-item"
+          onSubmit={handleSubmit(limparFormulario)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
+        >
+          <button type="button" className="btn btn-secondary me-2" onClick={handleCancel}>
+            Cancelar
+          </button>
+        </form>
+
+        <form
+          className="nav-item"
+          onSubmit={handleSubmit(salvarContrato)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
+        >
+          <button type="submit" className="btn btn-primary">
+            Salvar
+          </button>
+        </form>
+      </>
+    );
+  }
+
   return (
     <div className="form-container">
       {/* TOAST */}
       <ToastsReact
-        showWithoutButton={showToast}
+        showWithoutButton={true}
         position="top-center"
-        toasts={customToasts.map(toast => ({
-          ...toast,
-          children: toast.renderChildren ? toast.renderChildren() : null
-        }))}
+        toasts={toastMessages}
+        variant="dark"
+        opacity="25"
       />
-
       <div className="row justify-content-center">
         <div className="col-lg-12 col-md-12">
           <div className="card">
@@ -316,182 +487,32 @@ const AppForm = ({
                 }}
               >
                 <div className="row mb-3">
-                  {/* Fazer um select para a secretaria */}
-                  <div className="col-md-6">
-                    <div className="form-group">
-                      <label htmlFor="formSec" className="form-label">Secretaria*</label>
-                      <select
-                        className={`form-select ${errors.cad_sigla_pronome_tratamento ? 'is-invalid' : ''}`}
-                        id="formSec"
-                        {...register('cad_sigla_pronome_tratamento', { required: 'Secretaria é obrigatório' })}
-                      >
-                        <option value="">Selecione o tipo</option>
-                        {loading ? (
-                          <option>Carregando...</option>
-                        ) : (
-                          secretarias.map((sec) => (
-                            <option key={sec.id} value={sec.id}>
-                              {sec.cad_sigla_pronome_tratamento} - {sec.cad_tipo} - {sec.cad_pro_origem_id}
-                            </option>
-                          ))
-                        )}
-                      </select>
-                      {errors.cad_sigla_pronome_tratamento && (
-                        <div className="invalid-feedback">
-                          {errors.cad_sigla_pronome_tratamento.message}
-                        </div>
-                      )}
-                    </div>
+                  <div className="col-md-3">
+                    {/* CAMPO SECRETARIA */}
+                    {renderCampoSelectSecretaria()}
                   </div>
-                  <div className="col-md-6">
-                    <div className="form-group">
-                      <label htmlFor="formSei" className="form-label">SEI*</label>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.cont_sei ? 'is-invalid' : ''}`}
-                        id="formSei"
-                        {...register('cont_sei', { required: 'SEI é obrigatório' })}
-                      />
-                      {errors.cont_sei && (
-                        <div className="invalid-feedback">
-                          {errors.cont_sei.message}
-                        </div>
-                      )}
-                    </div>
+                  <div className="col-md-3">
+                    {/* CAMPO SEI */}
+                    {renderCampoTextSei()}
+                  </div>
+                  <div className="col-md-3">
+                    {/* CAMPO DATA INÍCIO */}
+                    {renderCampoDataInicio()}
+                  </div>
+                  <div className="col-md-3">
+                    {/* CAMPO DATA FIM */}
+                    {renderCampoDataFim()}
                   </div>
                 </div>
 
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <div className="form-group">
-                      <label htmlFor="formData1" className="form-label">Data Início*</label>
-                      <input
-                        type="date"
-                        className={`form-control ${errors.cont_data_inicio ? 'is-invalid' : ''}`}
-                        id="formData1"
-                        {...register('cont_data_inicio', { required: 'Data Início é obrigatório' })}
-                      />
-                      {errors.cont_data_inicio && (
-                        <div className="invalid-feedback">
-                          {errors.cont_data_inicio.message}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="form-group">
-                      <label htmlFor="formData2" className="form-label">Data Fim*</label>
-                      <input
-                        type="date"
-                        className={`form-control ${errors.cont_data_fim ? 'is-invalid' : ''}`}
-                        id="formData2"
-                        {...register('cont_data_fim', { required: 'Data Fim é obrigatório' })}
-                      />
-                      {errors.cont_data_fim && (
-                        <div className="invalid-feedback">
-                          {errors.cont_data_fim.message}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <div className="form-group">
-                      <label htmlFor="formToken" className="form-label">Token</label>
-                      <input
-                        type="text"
-                        className="form-control font-monospace"
-                        id="formToken"
-                        disabled
-                        {...register('remember_token')}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="row mb-3">
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formCreatedBy" className="form-label">Criado por</label>
-                      <input
-                        type="text"
-                        className="form-control bg-secondary"
-                        id="formCreatedBy"
-                        disabled
-                        {...register('created_by_name')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formCreatedAt" className="form-label">Data de criação</label>
-                      <input
-                        type="text"
-                        className="form-control bg-secondary"
-                        id="formCreatedAt"
-                        disabled
-                        {...register('created_at')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formUpdatedBy" className="form-label">Atualizado por</label>
-                      <input
-                        type="text"
-                        className="form-control bg-secondary"
-                        id="formUpdatedBy"
-                        disabled
-                        {...register('updated_by_name')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formUpdatedAt" className="form-label">Data de atualização</label>
-                      <input
-                        type="text"
-                        className="form-control bg-secondary"
-                        id="formUpdatedAt"
-                        disabled
-                        {...register('updated_at')}
-                      />
-                    </div>
-                  </div>
-                </div>
+                {/* ROW DADOS DE LOG */}
+                {renderRowLogForm()}
 
               </form>
+
               <div className="d-flex justify-content-end mt-4">
-
-                <form
-                  className="nav-item"
-                  onSubmit={handleSubmit(limparFormulario)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  <button type="button" className="btn btn-secondary me-2" onClick={handleCancel}>
-                    Cancelar
-                  </button>
-                </form>
-
-                <form
-                  className="nav-item"
-                  onSubmit={handleSubmit(salvarContrato)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  <button type="submit" className="btn btn-primary">
-                    Salvar
-                  </button>
-                </form>
+                {/* COMANDOS */}
+                {renderButtonCommands()}
               </div>
             </div>
             <div className="card-footer text-muted">
@@ -500,6 +521,24 @@ const AppForm = ({
           </div>
         </div>
       </div>
+
+      {(debugMyPrint) && (
+
+        <div className='mt-3'>
+          <JSONViewer
+            data={secretarias}
+            title="Resposta da API Secretarias"
+            collapsed={true}
+          />
+
+          <JSONViewer
+            data={showUpdateData}
+            title="Resposta da API fetchGetById (Atualizar Contrato)"
+            collapsed={true}
+          />
+        </div>
+
+      )}
 
       {/* Exibindo o Loading independentemente do conteúdo da tabela */}
       <Loading openLoading={loading} />

@@ -3,7 +3,7 @@ import Loading from '../../components/Loading';
 
 const AppAtualizar = () => {
   return (
-    <div>
+    <div className={`container`}>
       {/* Exibindo o Loading independentemente do conteúdo da tabela */}
       <Loading openLoading={true} />
     </div>
