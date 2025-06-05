@@ -58,7 +58,7 @@ const determineEnvironment = () => {
   }
 
   // Ambiente padrão caso nenhum outro seja detectado
-  return 'DEV1';
+  return 'DEV2';
 };
 
 // Definição das constantes de ambiente

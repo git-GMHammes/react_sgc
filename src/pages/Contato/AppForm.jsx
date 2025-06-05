@@ -421,49 +421,38 @@ const AppForm = ({
   const renderCampoTextSigla = () => {
     return (
       <>
-        <form
-          className="nav-item"
-          onSubmit={handleSubmit(onSubmit)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-            }
-          }}
-        >
-          <div className="form-group">
-            <label htmlFor="formSigla" className="form-label">Sigla *</label>
-            <select
-              className={`form-select ${errors.sigla_pronome_tratamento ? 'is-invalid' : ''}`}
-              id="formSec"
-              {...register('sigla_pronome_tratamento', { required: 'Secretaria é obrigatório' })}
-            >
-              <option value="">Selecione o tipo</option>
-              {loading ? (
-                <option>Carregando...</option>
-              ) : (
-                secretarias.map((sec, index) => (
-                  <option key={index} value={sec.id}>
-                    {`${debugMyPrint ? sec.id : ''}`} - {sec.cad_sigla_pronome_tratamento}
-                  </option>
-                ))
-              )}
-            </select>
-            {errors.sigla_pronome_tratamento && (
-              <div className="invalid-feedback">
-                {errors.sigla_pronome_tratamento.message}
-              </div>
+        <div className="form-group">
+          <label htmlFor="formSigla" className="form-label">Sigla *</label>
+          <select
+            className={`form-select ${errors.sigla_pronome_tratamento ? 'is-invalid' : ''}`}
+            id="formSec"
+            {...register('sigla_pronome_tratamento', { required: 'Secretaria é obrigatório' })}
+          >
+            <option value="">Selecione o tipo</option>
+            {loading ? (
+              <option>Carregando...</option>
+            ) : (
+              secretarias.map((sec, index) => (
+                <option key={index} value={sec.id}>
+                  {`${debugMyPrint ? sec.id : ''}`} - {sec.cad_sigla_pronome_tratamento}
+                </option>
+              ))
             )}
-          </div>
-        </form>
+          </select>
+          {errors.sigla_pronome_tratamento && (
+            <div className="invalid-feedback">
+              {errors.sigla_pronome_tratamento.message}
+            </div>
+          )}
+        </div>
       </>
     );
   }
 
   const renderCampoTextNome = () => {
     return (
-      <>
+      
         <div className="form-group">
-
           <label
             className="form-label"
             htmlFor="nome"
@@ -472,6 +461,7 @@ const AppForm = ({
           </label>
           <input
             type="text"
+            className={`form-control ${errors.nome ? "input-error" : ""}`}
             id="nome"
             {...register("nome", {
               required: "Nome é obrigatório",
@@ -480,12 +470,11 @@ const AppForm = ({
                 message: "Nome deve ter pelo menos 3 caracteres"
               }
             })}
-            className={errors.nome ? "input-error" : ""}
           />
           {errors.nome && <span className="error-message">{errors.nome.message}</span>}
 
         </div>
-      </>
+      
     );
   }
 
@@ -516,7 +505,6 @@ const AppForm = ({
     return (
       <>
         <div className="form-group">
-
           <label
             className="form-label"
             htmlFor="email"
@@ -525,6 +513,7 @@ const AppForm = ({
           </label>
           <input
             type="email"
+            className={`form-control ${errors.email ? "input-error" : ""}`}
             id="email"
             {...register("email", {
               required: "Email é obrigatório",
@@ -533,10 +522,8 @@ const AppForm = ({
                 message: "Endereço de email inválido"
               }
             })}
-            className={errors.email ? "input-error" : ""}
           />
           {errors.email && <span className="error-message">{errors.email.message}</span>}
-
         </div>
       </>
     );
@@ -687,33 +674,13 @@ const AppForm = ({
   const renderButtonCommands = () => {
     return (
       <>
-        <form
-          className="nav-item"
-          onSubmit={handleSubmit(limparFormulario)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-            }
-          }}
-        >
-          <button type="button" className="btn btn-secondary me-2" onClick={handleCancel}>
-            Cancelar
-          </button>
-        </form>
+        <button type="button" className="btn btn-secondary me-2" onClick={handleCancel}>
+          Cancelar
+        </button>
 
-        <form
-          className="nav-item"
-          onSubmit={handleSubmit(onSubmit)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-            }
-          }}
-        >
-          <button type="submit" className="btn btn-primary">
-            Salvar
-          </button>
-        </form>
+        <button type="submit" className="btn btn-primary">
+          Salvar
+        </button>
       </>
     );
   };

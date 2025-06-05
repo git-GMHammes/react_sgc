@@ -162,12 +162,12 @@ const CircuitoService = {
     // Método postSalvar com tratamento de erro completo
     postSave: async (data) => {
 
-        const url = `/circuito/api/cadastrar`;
+        const url = `/circuito/api/salvar`;
         // console.log('url (C:/laragon/www/sgcpro/src/public/script/react_modelo_v1/frontend/src/services/circuito.js):', url);
 
         try {
             const response = await api.post(url, data);
-            // console.log('response :: ', response);
+            console.log('response :: ', response);
 
             if (response.data.result.dbResponse !== undefined) {
                 return response.data.result.dbResponse;

@@ -161,7 +161,7 @@ const EmailService = {
     // Método postSalvar com tratamento de erro completo
     postSave: async (data) => {
 
-        const url = `/email/api/cadastrar`;
+        const url = `/email/api/salvar`;
         // console.log('url (C:/laragon/www/sgcpro/src/public/script/react_modelo_v1/frontend/src/services/telefone.js):', url);
 
         try {

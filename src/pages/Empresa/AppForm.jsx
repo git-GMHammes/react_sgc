@@ -4,7 +4,11 @@ import Loading from '../../components/Loading';
 import { set, useForm, useWatch } from 'react-hook-form';
 import EmpresaService from '../../services/empresa';
 import OrigemService from '../../services/origem';
+import EmailService from '../../services/email';
+import TelefoneService from '../../services/telefone';
+import EnderecoService from '../../services/endereco';
 import ToastsReact from '../../components/Message/Toasts';
+import JSONViewer from '../../components/JSONViewer';
 import { Alert, Spinner } from 'react-bootstrap';
 import "bootstrap/dist/css/bootstrap.min.css";
 import { start } from '@popperjs/core';
@@ -14,13 +18,19 @@ const AppForm = ({
   getID = null
 }) => {
 
+  const [debugMyPrint, setDebugMyPrint] = useState(true);
   const [origens, setOrigens] = useState([]);
+  const [emails, setEmails] = useState([]);
+  const [telefones, setTelefones] = useState([]);
+  const [enderecos, setEnderecos] = useState([]);
   const [tokenCsrf, setTokenCsrf] = useState('');
   const [loading, setLoading] = useState(true);
   const [defaultHeader, setDefaultHeader] = useState('primary');
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [messageToast, setMessageToast] = useState('...');
   const [showToast, setShowToast] = useState(false);
+  const [showUpdateData, setShowUpdateData] = useState([]);
+  
   const [customToasts, setCustomToasts] = useState([
     {
       title: "Toast com Spinner",
@@ -38,6 +48,7 @@ const AppForm = ({
     }
   ]);
 
+  // Configuração do formulário com react-hook-form
   const { register, control, setValue, getValues, reset, formState: { errors }, handleSubmit } = useForm({
     defaultValues: {
       token_csrf: token_csrf,
@@ -152,6 +163,11 @@ const AppForm = ({
     setConfirmationMessage(`/ ${Headermessage}`);
     setDefaultHeader(Headerdefault);
     return null;
+  };
+
+  const handleCancel = () => {
+    // Implementar lógica de cancelamento (voltar para página anterior, etc.)
+    // console.log('Ação cancelar');
   };
 
   const cadastrarEmpresa = async (formData) => {
@@ -380,23 +396,7 @@ const AppForm = ({
 
   // Formatar CNPJ/CPF
   useEffect(() => {
-    try {
-      const startData = async () => {
-        await fetchOrigens();
-        await registerform();
-      };
-
-      startData();
-
-    } catch (error) {
-      console.error('Erro no useEffect:', error);
-
-    } finally {
-      console.log('#useEffect finalizado');
-    }
-
-    carregarToken();
-
+  
     if (cnpjCpfValue) {
       // Remover todos os caracteres não numéricos
       let value = cnpjCpfValue.replace(/\D/g, '');
@@ -427,7 +427,28 @@ const AppForm = ({
         setValue('cad_cnpj_cpf', value);
       }
     }
-  }, [cnpjCpfValue, setValue]);
+
+  },[cnpjCpfValue, setValue]);  
+
+  useEffect(() => {
+    try {
+      const startData = async () => {
+        await fetchOrigens();
+        await registerform();
+      };
+
+      startData();
+
+    } catch (error) {
+      console.error('Erro no useEffect:', error);
+
+    } finally {
+      console.log('#useEffect finalizado');
+    }
+
+    carregarToken();
+
+  }, []);
 
   useEffect(() => {
 
@@ -438,7 +459,7 @@ const AppForm = ({
     return () => clearTimeout(timer);
   }, []);
 
-  seEffect(() => {
+  useEffect(() => {
 
     const initializeData = async () => {
       try {
@@ -493,19 +514,370 @@ const AppForm = ({
     }
   };
 
-  const handleCancel = () => {
-    // Implementar lógica de cancelamento (voltar para página anterior, etc.)
-    // console.log('Ação cancelar');
-  };
+  const renderCampoSelectOrigem = () => {
+    return (
+      <>
+        <label htmlFor="formOrigem" className="form-label">Origem*</label>
+        <select
+          className={`form-select ${errors.pro_origem_id ? 'is-invalid' : ''}`}
+          id="formOrigem"
+          {...register('cad_pro_origem_id', { required: 'Origem é obrigatório' })}
+        >
+          <option value="">Selecione...</option>
+          {origens.map((origem) => (
+            <option key={origem.id} value={origem.id}>
+              {origem.descricao}
+            </option>
+          ))}
+        </select>
+        {errors.cad_pro_origem_id && (
+          <div className="invalid-feedback">
+            {errors.cad_pro_origem_id.message}
+          </div>
+        )}
+      </>
+    );
+  }
 
-  useEffect(() => {
+  const renderCampoTipo = () => {
+    return (
+      <>
+        <label htmlFor="formTipo" className="form-label">Tipo*</label>
+        <select
+          className={`form-select ${errors.cad_tipo ? 'is-invalid' : ''}`}
+          id="formTipo"
+          {...register('cad_tipo', { required: 'Tipo é obrigatório' })}
+        >
+          <option value="">Selecione o tipo</option>
+          <option value="Cliente">Cliente</option>
+          <option value="Fornecedor">Fornecedor</option>
+          <option value="Ambos">Ambos</option>
+        </select>
+        {errors.tipo && (
+          <div className="invalid-feedback">
+            {errors.tipo.message}
+          </div>
+        )}
+      </>
+    );
+  }
 
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 100);
+  const renderCampoSigla = () => {
+    return (
+      <>
+        <label htmlFor="formSigla" className="form-label">Sigla/Pronome</label>
+        <input
+          type="text"
+          className="form-control"
+          id="formSigla"
+          maxLength={10}
+          {...register('cad_sigla_pronome_tratamento')}
+        />
+      </>
+    );
+  }
 
-    return () => clearTimeout(timer);
-  }, []);
+  const renderCampoNome = () => {
+    return (
+      <>
+        <label htmlFor="formNome" className="form-label">Nome/Razão Social*</label>
+        <input
+          type="text"
+          className={`form-control ${errors.cad_nome ? 'is-invalid' : ''}`}
+          id="formNome"
+          {...register('cad_nome', { required: 'Nome é obrigatório' })}
+        />
+        {errors.cad_nome && (
+          <div className="invalid-feedback">
+            {errors.cad_nome.message}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  const renderCampoAtivo = () => {
+    return (
+      <>
+        <label htmlFor="formActive" className="form-label">Ativo</label>
+        <select
+          className="form-select"
+          id="formActive"
+          {...register('cad_active')}
+        >
+          <option value="Y">Sim</option>
+          <option value="N">Não</option>
+        </select>
+      </>
+    );
+  }
+
+  const renderCampoCPF_CNPJ = () => {
+    return (
+      <>
+        <label htmlFor="formCnpjCpf" className="form-label">CNPJ/CPF*</label>
+        <input
+          type="text"
+          className={`form-control ${errors.cad_cnpj_cpf ? 'is-invalid' : ''}`}
+          onSubmit={handleCnpjCpfChange}
+          id="formCnpjCpf"
+          placeholder="000.000.000-00 ou 00.000.000/0000-00"
+          {...register('cad_cnpj_cpf', {
+            required: 'CNPJ/CPF é obrigatório',
+            validate: {
+              validFormat: (value) => {
+                const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
+                const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
+                const onlyNumbers = value.replace(/\D/g, '');
+
+                if (onlyNumbers.length > 11) {
+                  // CNPJ
+                  return (cnpjRegex.test(value) || onlyNumbers.length === 14) ||
+                    'CNPJ inválido. Use o formato XX.XXX.XXX/XXXX-XX ou apenas números';
+                } else {
+                  // CPF
+                  return (cpfRegex.test(value) || onlyNumbers.length === 11) ||
+                    'CPF inválido. Use o formato XXX.XXX.XXX-XX ou apenas números';
+                }
+              }
+            }
+          })}
+        />
+        {errors.cad_cnpj_cpf && (
+          <div className="invalid-feedback">
+            {errors.cad_cnpj_cpf.message}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  const renderCampoEmail = () => {
+    return (
+      <>
+        <label htmlFor="formEmail" className="form-label">Email</label>
+        <input
+          type="email"
+          className="form-control"
+          id="formEmail"
+          {...register('mail_email')}
+        />
+      </>
+    );
+  }
+
+  const renderCampoNumero = () => {
+    return (
+      <>
+        <label htmlFor="formNumero" className="form-label">Telefone</label>
+        <input
+          type="text"
+          className="form-control"
+          id="formNumero"
+          {...register('tel_numero')}
+        />
+      </>
+    );
+  }
+
+  const renderCampoTelTipo = () => {
+    return (
+      <>
+        <label htmlFor="formTelTipo" className="form-label">Tipo Telefone</label>
+        <input
+          type="text"
+          className="form-control"
+          id="formTelTipo"
+          {...register('tel_tipo')}
+        />
+      </>
+    );
+  }
+
+  const renderCampoCEP = () => {
+    return (
+      <>
+        <label htmlFor="formCEP" className="form-label">CEP</label>
+        <input
+          type="number"
+          className="form-control"
+          id="formCEP"
+          {...register('end_cep')}
+        />
+      </>
+    );
+  }
+
+  const renderCampoLogadouro = () => {
+    return (
+      <>
+        <label htmlFor="formLogradouro" className="form-label">Logradouro</label>
+        <input
+          type="text"
+          className="form-control"
+          id="formLogradouro"
+          {...register('end_logradouro')}
+        />
+      </>
+    );
+  }
+
+  const renderCampoEndNumero = () => {
+    return (
+      <>
+        <label htmlFor="formEndNumero" className="form-label">Número</label>
+        <input
+          type="text"
+          className="form-control"
+          id="formEndNumero"
+          {...register('end_numero')}
+        />
+      </>
+    );
+  }
+
+  const renderCampoBairro = () => {
+    return (
+      <>
+        <label htmlFor="formBairro" className="form-label">Bairro</label>
+        <input
+          type="text"
+          className="form-control"
+          id="formBairro"
+          {...register('end_bairro')}
+        />
+      </>
+    );
+  }
+
+  const renderCampoCidade = () => {
+    return (
+      <>
+        <label htmlFor="formCidade" className="form-label">Cidade</label>
+        <input
+          type="text"
+          className="form-control"
+          id="formCidade"
+          {...register('end_cidade')}
+        />
+      </>
+    );
+  }
+
+  const renderCampoEstado = () => {
+    return (
+      <>
+        <label htmlFor="formEstado" className="form-label">Estado</label>
+        <input
+          type="text"
+          className="form-control"
+          id="formEstado"
+          {...register('end_estado')}
+        />
+      </>
+    );
+  }
+
+  const renderRowLogForm = () => {
+    return (
+      <div className="row mb-3">
+        <div className="col-md-3">
+          <div className="form-group">
+            <label htmlFor="formToken" className="form-label">Token</label>
+            <input
+              type="text"
+              className="form-control font-monospace"
+              id="formToken"
+              disabled
+              {...register('cad_remember_token')}
+            />
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="form-group">
+            <label htmlFor="formCreatedBy" className="form-label">Criado por</label>
+            <input
+              type="text"
+              className="form-control bg-secondary"
+              id="formCreatedBy"
+              disabled
+              {...register('cad_created_by_name')}
+            />
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="form-group">
+            <label htmlFor="formCreatedAt" className="form-label">Data de criação</label>
+            <input
+              type="text"
+              className="form-control bg-secondary"
+              id="formCreatedAt"
+              disabled
+              {...register('cad_created_at')}
+            />
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="form-group">
+            <label htmlFor="formUpdatedBy" className="form-label">Atualizado por</label>
+            <input
+              type="text"
+              className="form-control bg-secondary"
+              id="formUpdatedBy"
+              disabled
+              {...register('cad_updated_by_name')}
+            />
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="form-group">
+            <label htmlFor="formUpdatedAt" className="form-label">Data de atualização</label>
+            <input
+              type="text"
+              className="form-control bg-secondary"
+              id="formUpdatedAt"
+              disabled
+              {...register('cad_updated_at')}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderButtonCommands = () => {
+    return (
+      <>
+        <form
+          className="nav-item"
+          onSubmit={handleSubmit(limparFormulario)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
+        >
+          <button type="button" className="btn btn-secondary me-2" onClick={handleCancel}>
+            Cancelar
+          </button>
+        </form>
+
+        <form
+          className="nav-item"
+          onSubmit={handleSubmit(salvarEmpresa)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
+        >
+          <button type="submit" className="btn btn-primary">
+            Salvar
+          </button>
+        </form>
+      </>
+    );
+  }
 
   return (
     <div className="form-container">
@@ -535,323 +907,15 @@ const AppForm = ({
                   }
                 }}
               >
-                <div className="row mb-3">
-                  <div className="col-md-2">
-                    <div className="form-group">
-                      <input
-                        type="hidden"
-                        id="token_csrf"
-                        {...register('token_csrf')}
-                      />
-                      <label htmlFor="formId" className="form-label">ID</label>
-                      <input
-                        type="text"
-                        className="form-control bg-secondary"
-                        id="formId"
-                        disabled
-                        {...register('id')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-5">
-                    <div className="form-group">
-                      <label htmlFor="formOrigem" className="form-label">Origem*</label>
-                      <select
-                        className={`form-control ${errors.pro_origem_id ? 'is-invalid' : ''}`}
-                        id="formOrigem"
-                        {...register('cad_pro_origem_id', { required: 'Origem é obrigatório' })}
-                      >
-                        <option value="">Selecione...</option>
-                        {opcoesOrigem.map((origem) => (
-                          <option key={origem.id} value={origem.id}>
-                            {origem.descricao}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.cad_pro_origem_id && (
-                        <div className="invalid-feedback">
-                          {errors.cad_pro_origem_id.message}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="col-md-5">
-                    <div className="form-group">
-                      <label htmlFor="formTipo" className="form-label">Tipo*</label>
-                      <select
-                        className={`form-select ${errors.cad_tipo ? 'is-invalid' : ''}`}
-                        id="formTipo"
-                        {...register('cad_tipo', { required: 'Tipo é obrigatório' })}
-                      >
-                        <option value="">Selecione o tipo</option>
-                        <option value="Cliente">Cliente</option>
-                        <option value="Fornecedor">Fornecedor</option>
-                        <option value="Ambos">Ambos</option>
-                      </select>
-                      {errors.tipo && (
-                        <div className="invalid-feedback">
-                          {errors.tipo.message}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
 
-                <div className="row mb-3">
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formSigla" className="form-label">Sigla/Pronome</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="formSigla"
-                        maxLength={10}
-                        {...register('cad_sigla_pronome_tratamento')}
-                      />
-                    </div>
+                <div className="row mb-4">
+                  <div className="form-group">
+                    <input
+                      type="hidden"
+                      id="token_csrf"
+                      {...register('token_csrf')}
+                    />
                   </div>
-                  <div className="col-md-7">
-                    <div className="form-group">
-                      <label htmlFor="formNome" className="form-label">Nome/Razão Social*</label>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.cad_nome ? 'is-invalid' : ''}`}
-                        id="formNome"
-                        {...register('cad_nome', { required: 'Nome é obrigatório' })}
-                      />
-                      {errors.cad_nome && (
-                        <div className="invalid-feedback">
-                          {errors.cad_nome.message}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="col-md-2">
-                    <div className="form-group">
-                      <label htmlFor="formActive" className="form-label">Ativo</label>
-                      <select
-                        className="form-select"
-                        id="formActive"
-                        {...register('cad_active')}
-                      >
-                        <option value="Y">Sim</option>
-                        <option value="N">Não</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <div className="form-group">
-                      <label htmlFor="formCnpjCpf" className="form-label">CNPJ/CPF*</label>
-                      <input
-                        type="text"
-                        className={`form-control ${errors.cad_cnpj_cpf ? 'is-invalid' : ''}`}
-                        id="formCnpjCpf"
-                        placeholder="000.000.000-00 ou 00.000.000/0000-00"
-                        {...register('cad_cnpj_cpf', {
-                          required: 'CNPJ/CPF é obrigatório',
-                          validate: {
-                            validFormat: (value) => {
-                              const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
-                              const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
-                              const onlyNumbers = value.replace(/\D/g, '');
-
-                              if (onlyNumbers.length > 11) {
-                                // CNPJ
-                                return (cnpjRegex.test(value) || onlyNumbers.length === 14) ||
-                                  'CNPJ inválido. Use o formato XX.XXX.XXX/XXXX-XX ou apenas números';
-                              } else {
-                                // CPF
-                                return (cpfRegex.test(value) || onlyNumbers.length === 11) ||
-                                  'CPF inválido. Use o formato XXX.XXX.XXX-XX ou apenas números';
-                              }
-                            }
-                          }
-                        })}
-                      />
-                      {errors.cad_cnpj_cpf && (
-                        <div className="invalid-feedback">
-                          {errors.cad_cnpj_cpf.message}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="form-group">
-                      <label htmlFor="formToken" className="form-label">Token</label>
-                      <input
-                        type="text"
-                        className="form-control font-monospace"
-                        id="formToken"
-                        disabled
-                        {...register('cad_remember_token')}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="row mb-3">
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formEmail" className="form-label">Email</label>
-                      <input
-                        type="email"
-                        className="form-control"
-                        id="formEmail"
-                        {...register('mail_email')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formNumero" className="form-label">Telefone</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="formNumero"
-                        {...register('tel_numero')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formTelTipo" className="form-label">Tipo Telefone</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="formTelTipo"
-                        {...register('tel_tipo')}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="row mb-3">
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formCEP" className="form-label">CEP</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        id="formCEP"
-                        {...register('end_cep')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formLogradouro" className="form-label">Logradouro</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="formLogradouro"
-                        {...register('end_logradouro')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formEndNumero" className="form-label">Número</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="formEndNumero"
-                        {...register('end_numero')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formBairro" className="form-label">Bairro</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="formBairro"
-                        {...register('end_bairro')}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="row mb-3">
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formCidade" className="form-label">Cidade</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="formCidade"
-                        {...register('end_cidade')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formEstado" className="form-label">Estado</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="formEstado"
-                        {...register('end_estado')}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="row mb-3">
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formCreatedBy" className="form-label">Criado por</label>
-                      <input
-                        type="text"
-                        className="form-control bg-secondary"
-                        id="formCreatedBy"
-                        disabled
-                        {...register('cad_created_by_name')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formCreatedAt" className="form-label">Data de criação</label>
-                      <input
-                        type="text"
-                        className="form-control bg-secondary"
-                        id="formCreatedAt"
-                        disabled
-                        {...register('created_at')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formUpdatedBy" className="form-label">Atualizado por</label>
-                      <input
-                        type="text"
-                        className="form-control bg-secondary"
-                        id="formUpdatedBy"
-                        disabled
-                        {...register('cad_updated_by_name')}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="form-group">
-                      <label htmlFor="formUpdatedAt" className="form-label">Data de atualização</label>
-                      <input
-                        type="text"
-                        className="form-control bg-secondary"
-                        id="formUpdatedAt"
-                        disabled
-                        {...register('updated_at')}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="row mb-3">
                   <div className="form-group">
                     <input
                       type="hidden"
@@ -881,36 +945,91 @@ const AppForm = ({
                   </div>
                 </div>
 
+                <div className="row mb-3">
+                  <div className="col-md-4">
+                    {/* CAMPO SECRETARIA */}
+                    {renderCampoSelectOrigem()}
+                  </div>
+                  <div className="col-md-4">
+                    {/* CAMPO SEI */}
+                    {renderCampoTipo()}
+                  </div>
+                  <div className="col-md-4">
+                    {/* CAMPO DATA INÍCIO */}
+                    {renderCampoSigla()}
+                  </div>
+                </div>
+
+                <div className="row mb-3">
+                  <div className="col-md-4">
+                    {/* CAMPO DATA FIM */}
+                    {renderCampoNome()}
+                  </div>
+                  <div className="col-md-4">
+                    {/* CAMPO SECRETARIA */}
+                    {renderCampoAtivo()}
+                  </div>
+                  <div className="col-md-4">
+                    {/* CAMPO SEI */}
+                    {renderCampoCPF_CNPJ()}
+                  </div>
+                </div>
+                  
+
+                <div className="row mb-3">
+                  <div className="col-md-4">
+                    {/* CAMPO DATA INÍCIO */}
+                    {renderCampoEmail()}
+                  </div>
+                  <div className="col-md-4">
+                    {/* CAMPO DATA FIM */}
+                    {renderCampoNumero()}
+                  </div>
+                  <div className="col-md-4">
+                    {/* CAMPO SECRETARIA */}
+                    {renderCampoTelTipo()}
+                  </div>
+                </div>
+
+
+                <div className="row mb-3">
+                  <div className="col-md-4">
+                    {/* CAMPO SEI */}
+                    {renderCampoCEP()}
+                  </div>
+                  <div className="col-md-4">
+                    {/* CAMPO DATA INÍCIO */}
+                    {renderCampoLogadouro()}
+                  </div>
+                  <div className="col-md-4">
+                    {/* CAMPO DATA FIM */}
+                    {renderCampoEndNumero()}
+                  </div>
+                </div>
+
+                <div className="row mb-3">
+                  <div className="col-md-4">
+                    {/* CAMPO SECRETARIA */}
+                    {renderCampoBairro()}
+                  </div>
+                  <div className="col-md-4">
+                    {/* CAMPO SEI */}
+                    {renderCampoCidade()}
+                  </div>
+                  <div className="col-md-4">
+                    {/* CAMPO DATA INÍCIO */}
+                    {renderCampoEstado()}
+                  </div>
+                </div>
+
+                {/* ROW DADOS DE LOG */}
+                {renderRowLogForm()}
+
+
               </form>
               <div className="d-flex justify-content-end mt-4">
-
-                <form
-                  className="nav-item"
-                  onSubmit={handleSubmit(limparFormulario)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  <button type="button" className="btn btn-secondary me-2" onClick={handleCancel}>
-                    Cancelar
-                  </button>
-                </form>
-
-                <form
-                  className="nav-item"
-                  onSubmit={handleSubmit(cadastrarEmpresa)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  <button type="submit" className="btn btn-primary">
-                    Salvar
-                  </button>
-                </form>
+                {/* COMANDOS */}
+                {renderButtonCommands()}
               </div>
             </div>
             <div className="card-footer text-muted">
@@ -919,6 +1038,24 @@ const AppForm = ({
           </div>
         </div>
       </div>
+
+      {(debugMyPrint) && (
+
+        <div className='mt-3'>
+          <JSONViewer
+            data={origens}
+            title="Resposta da API Origens"
+            collapsed={true}
+          />
+
+          <JSONViewer
+            data={showUpdateData}
+            title="Resposta da API fetchGetById (Atualizar Empresa)"
+            collapsed={true}
+          />
+        </div>
+
+      )}
 
       {/* Exibindo o Loading independentemente do conteúdo da tabela */}
       <Loading openLoading={loading} />

@@ -28,8 +28,9 @@ const AppForm = ({
     defaultValues: {
       token_csrf: token_csrf,
       id: '',
-      cad_prestadora_sigla_pronome_tratamento: '',
       cont_sei: '',
+      cont_nome: '',
+      cont_active: '',
       cont_data_inicio: '',
       cont_data_fim: '',
       created_by: '',
@@ -45,7 +46,7 @@ const AppForm = ({
   // Funções de submissão para diferentes propósitos
   const salvarContrato = (data) => {
     fetchSave(data);
-    // console.log('Salvando empresa:', data);
+    console.log('Salvando empresa:', data);
   };
 
   const limparFormulario = () => {
@@ -76,6 +77,7 @@ const AppForm = ({
       };
 
       const response = await ContratoService.postSave(payload);
+      console.log(response); // Veja o que realmente está vindo
 
       if (response && !response.error) {
         // Cadastro foi bem-sucedido
@@ -185,15 +187,11 @@ const AppForm = ({
         let dadosIniciais = {
           token_csrf: token_csrf || 'erro',
           id: updateData.id || '',
-          velocidade_id: updateData.velocidade_id || '',
-          cadastro_empresa_id: updateData.cadastro_empresa_id || '',
-          cadastro_cliente_id: updateData.cadastro_cliente_id || '',
-          active: updateData.active || '',
-          sei: updateData.sei || '',
-          data_inicio: updateData.data_inicio || '',
-          data_fim: updateData.data_fim || '',
-          nome: updateData.nome || '',
-          nome: updateData.nome || '',
+          cont_sei: updateData.cont_sei || '',
+          cont_nome: updateData.cont_nome || '',
+          cont_active: updateData.cont_active || '',
+          cont_data_inicio: updateData.cont_data_inicio || '',
+          cont_data_fim: updateData.cont_data_fim || '',
           remember_token: updateData.remember_token || '',
           created_by: updateData.cad_created_by || '0',
           created_by_name: updateData.cad_created_by_name || 'unknown',
@@ -209,15 +207,11 @@ const AppForm = ({
       reset({
         token_csrf: token_csrf,
         id: '',
-        velocidade_id: '',
-        cadastro_empresa_id: '',
-        cadastro_cliente_id: '',
-        active: '',
-        sei: '',
-        data_inicio: '',
-        data_fim: '',
-        nome: '',
-        nome: '',
+        cont_sei: '',
+        cont_nome: '',
+        cont_active: '',
+        cont_data_inicio: '',
+        cont_data_fim: '',
         remember_token: '',
         created_by: '',
         created_by_name: '',
@@ -321,6 +315,49 @@ const AppForm = ({
     );
   }
 
+  const renderCampoAtivo = () => {
+    return (
+      <>
+        <div className="form-grup">
+          <label htmlFor="formActive" className="form-label">Ativo*</label>
+          <select
+            className="form-select"
+            id="formActive"
+            value={getValues('cont_active')}
+            {...register('cont_active', { required: 'Ativo é obrigatório' })}
+          >
+            <option value="Y">Sim</option>
+            <option value="N">Não</option>
+          </select>
+          {errors.cont_active && (
+            <div className="invalid-feedback">
+              {errors.cont_active.message}
+            </div>
+          )}
+        </div>
+      </>
+    );
+  }
+
+  const renderTextNome = () => {
+    return (
+      <div className="form-grup">
+        <label htmlFor="formNome" className="form-label">Nome*</label>
+        <input
+          type="text"
+          className={`form-control ${errors.sei ? 'is-invalid' : ''}`}
+          id="formNome"
+          {...register('cont_nome', { required: 'Nome é obrigatório' })}
+        />
+        {errors.cont_nome && (
+          <div className="invalid-feedback">
+            {errors.cont_nome.message}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const renderCampoDataInicio = () => {
     return (
       <div className="form-group">
@@ -362,18 +399,6 @@ const AppForm = ({
   const renderRowLogForm = () => {
     return (
       <div className="row mb-3">
-        <div className="col-md-3">
-          <div className="form-group">
-            <label htmlFor="formToken" className="form-label">Token</label>
-            <input
-              type="text"
-              className="form-control font-monospace"
-              id="formToken"
-              disabled
-              {...register('remember_token')}
-            />
-          </div>
-        </div>
         <div className="col-md-3">
           <div className="form-group">
             <label htmlFor="formCreatedBy" className="form-label">Criado por</label>
@@ -445,7 +470,7 @@ const AppForm = ({
 
         <form
           className="nav-item"
-          onSubmit={handleSubmit(salvarContrato)}
+          onSubmit={handleSubmit(cadastrarContrato)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -494,6 +519,14 @@ const AppForm = ({
                   <div className="col-md-3">
                     {/* CAMPO SEI */}
                     {renderCampoTextSei()}
+                  </div>
+                  <div className="col-md-3">
+                    {/* CAMPO SEI */}
+                    {renderCampoAtivo()}
+                  </div>
+                  <div className="col-md-3">
+                    {/* CAMPO SEI */}
+                    {renderTextNome()}
                   </div>
                   <div className="col-md-3">
                     {/* CAMPO DATA INÍCIO */}
