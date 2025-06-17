@@ -30,7 +30,7 @@ const AppForm = ({
   const [messageToast, setMessageToast] = useState('...');
   const [showToast, setShowToast] = useState(false);
   const [showUpdateData, setShowUpdateData] = useState([]);
-  
+
   const [customToasts, setCustomToasts] = useState([
     {
       title: "Toast com Spinner",
@@ -210,7 +210,7 @@ const AppForm = ({
         setCustomToasts(prev => [
           {
             ...prev[0],
-            title: "Cadastro de Cobranca",
+            title: "Cadastro de Emmpresa",
             strong: toastStrong,
             time: "agora",
             delay: 1000,
@@ -247,7 +247,7 @@ const AppForm = ({
   const fetchGetById = async (id = getID) => {
     try {
       const response = await EmpresaService.getById(id);
-      console.log('fetchGetById/Cliente:', response);
+      console.log('fetchGetById/Empresa:', response);
       return response;
 
     } catch (error) {
@@ -396,7 +396,7 @@ const AppForm = ({
 
   // Formatar CNPJ/CPF
   useEffect(() => {
-  
+
     if (cnpjCpfValue) {
       // Remover todos os caracteres não numéricos
       let value = cnpjCpfValue.replace(/\D/g, '');
@@ -428,7 +428,7 @@ const AppForm = ({
       }
     }
 
-  },[cnpjCpfValue, setValue]);  
+  }, [cnpjCpfValue, setValue]);
 
   useEffect(() => {
     try {
@@ -537,7 +537,7 @@ const AppForm = ({
         )}
       </>
     );
-  }
+  };
 
   const renderCampoTipo = () => {
     return (
@@ -560,7 +560,7 @@ const AppForm = ({
         )}
       </>
     );
-  }
+  };
 
   const renderCampoSigla = () => {
     return (
@@ -594,7 +594,7 @@ const AppForm = ({
         )}
       </>
     );
-  }
+  };
 
   const renderCampoAtivo = () => {
     return (
@@ -610,7 +610,7 @@ const AppForm = ({
         </select>
       </>
     );
-  }
+  };
 
   const renderCampoCPF_CNPJ = () => {
     return (
@@ -650,7 +650,7 @@ const AppForm = ({
         )}
       </>
     );
-  }
+  };
 
   const renderCampoEmail = () => {
     return (
@@ -664,7 +664,7 @@ const AppForm = ({
         />
       </>
     );
-  }
+  };
 
   const renderCampoNumero = () => {
     return (
@@ -692,7 +692,7 @@ const AppForm = ({
         />
       </>
     );
-  }
+  };
 
   const renderCampoCEP = () => {
     return (
@@ -706,7 +706,7 @@ const AppForm = ({
         />
       </>
     );
-  }
+  };
 
   const renderCampoLogadouro = () => {
     return (
@@ -720,7 +720,7 @@ const AppForm = ({
         />
       </>
     );
-  }
+  };
 
   const renderCampoEndNumero = () => {
     return (
@@ -734,7 +734,7 @@ const AppForm = ({
         />
       </>
     );
-  }
+  };
 
   const renderCampoBairro = () => {
     return (
@@ -748,7 +748,7 @@ const AppForm = ({
         />
       </>
     );
-  }
+  };
 
   const renderCampoCidade = () => {
     return (
@@ -776,7 +776,7 @@ const AppForm = ({
         />
       </>
     );
-  }
+  };
 
   const renderRowLogForm = () => {
     return (
@@ -843,7 +843,7 @@ const AppForm = ({
         </div>
       </div>
     )
-  }
+  };
 
   const renderButtonCommands = () => {
     return (
@@ -877,7 +877,7 @@ const AppForm = ({
         </form>
       </>
     );
-  }
+  };
 
   return (
     <div className="form-container">
@@ -974,7 +974,7 @@ const AppForm = ({
                     {renderCampoCPF_CNPJ()}
                   </div>
                 </div>
-                  
+
 
                 <div className="row mb-3">
                   <div className="col-md-4">

@@ -5,7 +5,6 @@ import { getBaseApi } from '../config/env';
 // Obter a URL base do ambiente atual
 const baseUrl = getBaseApi();
 // console.log('baseUrl (C:/laragon/www/sgcpro/src/public/script/react_modelo_v1/frontend/src/services/circuito.js):', baseUrl);
-// Configuração base do axios
 
 // Configuração base do axios
 const api = axios.create({
@@ -19,8 +18,14 @@ const api = axios.create({
 // Serviço para gerenciar empresas
 const EmpresaService = {
 
-    getEndPoint: async () => {
-        const url = '/empresa/endpoint/salvar';
+    getEndPoint: async (parameter = null) => {
+        let url = `/empresa/endpoint/exibir`;
+
+        if (parameter === null) {
+            url = `/empresa/endpoint/exibir`;
+        } else {
+            url = `/empresa/endpoint/${parameter}`;
+        }
         let gov_br = [];
         let token_csrf = '';
         let getURI = [];
@@ -165,15 +170,52 @@ const EmpresaService = {
         const url = `/empresa/api/salvar`;
         // console.log('url (C:/laragon/www/sgcpro/src/public/script/react_modelo_v1/frontend/src/services/empresa.js):', url);
 
+        let idSave = 0;
+        let buildReturn = {
+            status: `erro`,
+            id: 0,
+            affectedRows: 0,
+        };
+
         try {
             const response = await api.post(url, data);
             // console.log('response :: ', response);
 
-            if (response.data.result.dbResponse !== undefined) {
-                return response.data.result.dbResponse;
-            } else {
-                return [];
+            // insertID
+            // updateID
+            // affectedRows
+
+            if (
+                response.data !== undefined &&
+                response.data.result !== undefined &&
+                response.data.result.insertID !== undefined
+            ) {
+                idSave = response.data.result.insertID;
             }
+
+            if (
+                response.data !== undefined &&
+                response.data.result !== undefined &&
+                response.data.result.updateID !== undefined
+            ) {
+                idSave = response.data.result.updateID;
+            }
+
+            if (
+                response.data !== undefined &&
+                response.data.status !== undefined &&
+                response.data.result.affectedRows !== null
+            ) {
+                buildReturn = {
+                    status: response.data.status,
+                    id: idSave,
+                    affectedRows: response.data.result.affectedRows,
+                };
+            }
+
+            console.log('buildReturn :: ', buildReturn);
+            return buildReturn;
+
         } catch (error) {
             // Tratamento específico para erro 404
             if (error.response && error.response.status === 404) {

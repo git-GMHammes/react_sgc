@@ -24,12 +24,14 @@ const AppForm = ({
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [toastMessages, setToastMessages] = useState([]);
   const [showUpdateData, setShowUpdateData] = useState([]);
+  const [formSuccess, setFormSuccess] = useState(false);
 
   // Configuração do react-hook-form com validações
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors }
   } = useForm({
     // 
@@ -167,23 +169,24 @@ const AppForm = ({
   }
 
   const handlePhoneChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length <= 11) {
-      // Formatação básica: (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
-      if (value.length > 2) {
-        value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
-      }
-      if (value.length > 10) {
-        const parts = value.split(' ');
-        if (parts.length > 1) {
-          const number = parts[1];
-          if (number.length > 5) {
-            value = `(${parts[0].substring(1)}) ${number.substring(0, number.length - 4)}-${number.substring(number.length - 4)}`;
-          }
-        }
-      }
-      setValue('numero', value, { shouldValidate: true });
+    let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é número
+
+    if (value.length > 11) value = value.slice(0, 11); // Limita a 11 dígitos
+
+    // Monta a máscara
+    if (value.length <= 10) {
+      // Fixo: (XX) XXXX-XXXX
+      value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, function (match, p1, p2, p3) {
+        return `(${p1}) ${p2}${p3 ? '-' + p3 : ''}`;
+      });
+    } else {
+      // Celular: (XX) XXXXX-XXXX
+      value = value.replace(/(\d{2})(\d{5})(\d{0,4})/, function (match, p1, p2, p3) {
+        return `(${p1}) ${p2}${p3 ? '-' + p3 : ''}`;
+      });
     }
+
+    setValue('numero', value, { shouldValidate: true });
   };
 
   const handlePhoneBlur = async (e) => {
@@ -324,6 +327,7 @@ const AppForm = ({
       }
 
       setLoading(false);
+      
     } catch (err) {
       console.error('Erro filtro:', err);
       setLoading(false);
@@ -451,30 +455,30 @@ const AppForm = ({
 
   const renderCampoTextNome = () => {
     return (
-      
-        <div className="form-group">
-          <label
-            className="form-label"
-            htmlFor="nome"
-          >
-            Nome *
-          </label>
-          <input
-            type="text"
-            className={`form-control ${errors.nome ? "input-error" : ""}`}
-            id="nome"
-            {...register("nome", {
-              required: "Nome é obrigatório",
-              minLength: {
-                value: 3,
-                message: "Nome deve ter pelo menos 3 caracteres"
-              }
-            })}
-          />
-          {errors.nome && <span className="error-message">{errors.nome.message}</span>}
 
-        </div>
-      
+      <div className="form-group">
+        <label
+          className="form-label"
+          htmlFor="nome"
+        >
+          Nome *
+        </label>
+        <input
+          type="text"
+          className={`form-control ${errors.nome ? "input-error" : ""}`}
+          id="nome"
+          {...register("nome", {
+            required: "Nome é obrigatório",
+            minLength: {
+              value: 3,
+              message: "Nome deve ter pelo menos 3 caracteres"
+            }
+          })}
+        />
+        {errors.nome && <span className="error-message">{errors.nome.message}</span>}
+
+      </div>
+
     );
   }
 
@@ -674,13 +678,33 @@ const AppForm = ({
   const renderButtonCommands = () => {
     return (
       <>
-        <button type="button" className="btn btn-secondary me-2" onClick={handleCancel}>
-          Cancelar
-        </button>
+        <form
+          className="nav-item"
+          onSubmit={handleSubmit(limparFormulario)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
+        >
+          <button type="button" className="btn btn-secondary me-2" onClick={handleCancel}>
+            Cancelar
+          </button>
+        </form>
 
-        <button type="submit" className="btn btn-primary">
-          Salvar
-        </button>
+        <form
+          className="nav-item"
+          onSubmit={handleSubmit(salvarContato)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
+        >
+          <button type="submit" className="btn btn-primary">
+            Salvar
+          </button>
+        </form>
       </>
     );
   };
@@ -704,7 +728,7 @@ const AppForm = ({
             <div className="card-body">
               <form
                 className="nav-item"
-                onSubmit={handleSubmit(onSubmit)}
+                onSubmit={handleSubmit(salvarContato)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -751,11 +775,11 @@ const AppForm = ({
                 {/* ROW DADOS DE LOG */}
                 {renderRowLogForm()}
 
-                <div className="d-flex justify-content-end mt-4">
-                  {/* COMANDOS */}
-                  {renderButtonCommands()}
-                </div>
               </form>
+              <div className="d-flex justify-content-end mt-4">
+                {/* COMANDOS */}
+                {renderButtonCommands()}
+              </div>
             </div>
             <div className="card-footer text-muted">
               <small>* Campos obrigatórios</small>

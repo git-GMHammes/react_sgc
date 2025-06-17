@@ -43,6 +43,12 @@ const AppForm = ({
     }
   });
 
+  // Observar mudanças no campo cad_cnpj_cpf para formatação
+  const cnpjCpfValue = useWatch({
+    control,
+    name: 'cad_cnpj_cpf',
+  });
+
   // Funções de submissão para diferentes propósitos
   const salvarSecretaria = (data) => {
     fetchSave(data);
@@ -224,6 +230,31 @@ const AppForm = ({
     }
   }
 
+  // Formatar CNPJ/CPF
+  useEffect(() => {
+
+    if (cnpjCpfValue) {
+      // Remover todos os caracteres não numéricos
+      let value = cnpjCpfValue.replace(/\D/g, '');
+
+      // Formato CNPJ: XX.XXX.XXX/XXXX-XX
+      if (value.length > 12) {
+        value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2}).*/, '$1.$2.$3/$4-$5');
+      } else if (value.length > 8) {
+        value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4}).*/, '$1.$2.$3/$4');
+      } else if (value.length > 5) {
+        value = value.replace(/^(\d{2})(\d{3})(\d{0,3}).*/, '$1.$2.$3');
+      } else if (value.length > 2) {
+        value = value.replace(/^(\d{2})(\d{0,3}).*/, '$1.$2');
+      }
+
+      if (value !== cnpjCpfValue) {
+        setValue('cad_cnpj_cpf', value);
+      }
+    }
+
+  }, [cnpjCpfValue, setValue]);
+
   useEffect(() => {
     try {
       const startData = async () => {
@@ -267,6 +298,33 @@ const AppForm = ({
     initializeData();
   }, [reset]);
 
+  // Função para formatar CNPJ/CPF durante a digitação
+  const handleCnpjCpfChange = (e) => {
+    let { value } = e.target;
+
+    // Remover todos os caracteres não numéricos
+    value = value.replace(/\D/g, '');
+
+    // Formato CNPJ: XX.XXX.XXX/XXXX-XX
+    if (value.length > 12) {
+      value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2}).*/, '$1.$2.$3/$4-$5');
+    } else if (value.length > 8) {
+      value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4}).*/, '$1.$2.$3/$4');
+    } else if (value.length > 5) {
+      value = value.replace(/^(\d{2})(\d{3})(\d{0,3}).*/, '$1.$2.$3');
+    } else if (value.length > 2) {
+      value = value.replace(/^(\d{2})(\d{0,3}).*/, '$1.$2');
+    }
+
+    // Limpar erro específico quando o campo é alterado
+    if (errors.cad_cnpj_cpf) {
+      setErrors({
+        ...errors,
+        cad_cnpj_cpf: null
+      });
+    }
+  };
+
   const renderCampoSelectSigla = () => {
     return (
       <div className="form-group">
@@ -307,20 +365,36 @@ const AppForm = ({
 
   const renderCampoCnpjCpf = () => {
     return (
-      <div className="form-group">
-        <label htmlFor="formCnpjCpf" className="form-label">Cnpj*</label>
+      <>
+        <label htmlFor="formCnpjCpf" className="form-label">CNPJ*</label>
         <input
           type="text"
           className={`form-control ${errors.cad_cnpj_cpf ? 'is-invalid' : ''}`}
+          onSubmit={handleCnpjCpfChange}
           id="formCnpjCpf"
-          {...register('cad_cnpj_cpf', { required: 'Sigla é obrigatória' })}
+          placeholder="00.000.000/0000-00"
+          {...register('cad_cnpj_cpf', {
+            required: 'CNPJ é obrigatório',
+            validate: {
+              validFormat: (value) => {
+                const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
+                const onlyNumbers = value.replace(/\D/g, '');
+
+                if (onlyNumbers.length > 11) {
+                  // CNPJ
+                  return (cnpjRegex.test(value) || onlyNumbers.length === 14) ||
+                    'CNPJ inválido. Use o formato XX.XXX.XXX/XXXX-XX ou apenas números';
+                }
+              }
+            }
+          })}
         />
         {errors.cad_cnpj_cpf && (
           <div className="invalid-feedback">
             {errors.cad_cnpj_cpf.message}
           </div>
         )}
-      </div>
+      </>
     );
   }
 

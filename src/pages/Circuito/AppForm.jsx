@@ -1,4 +1,4 @@
-// C:\laragon\www\sgcpro\src\public\script\react_modelo_v1\frontend\src\pages\Secretaria\AppForm.jsx
+// C:\laragon\www\sgcpro\src\public\script\react_modelo_v1\frontend\src\pages\Circuito\AppForm.jsx
 import React, { useState, useEffect } from 'react';
 import Loading from '../../components/Loading';
 import { set, useForm, useWatch } from 'react-hook-form';
@@ -10,6 +10,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { start } from '@popperjs/core';
 
 const AppForm = ({
+  getURI = [],
   token_csrf = {},
   getID = null
 }) => {
@@ -21,19 +22,27 @@ const AppForm = ({
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [toastMessages, setToastMessages] = useState([]);
   const [showUpdateData, setShowUpdateData] = useState([]);
+  const [formSuccess, setFormSuccess] = useState(false);
 
   // Configuração do formulário com react-hook-form
-  const { register, control, setValue, getValues, reset, formState: { errors }, handleSubmit } = useForm({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
       token_csrf: token_csrf,
       id: '',
-      circ_sigla: '',
-      circ_nome: '',
-      circ_active: '',
-      circ_data_ativacao: '',
-      vel_velocidade: '',
-      circ_SEI: '',
-      circ_data_cancelamento: '',
+      sigla: '',
+      status: '',
+      active: 'Y',
+      nome: '',
+      data_ativacao: '',
+      data_cancelamento: '',
+      sei: '',
+      // vel_velocidade: '',
       remember_token: '',
       created_by: '',
       created_by_name: '',
@@ -44,6 +53,24 @@ const AppForm = ({
       deleted_at: null
     }
   });
+
+  const onSubmit = (data) => {
+    console.log('Dados do formulário:', data);
+
+    // Simulação de envio para API
+    // Em um caso real, você faria uma chamada fetch/axios aqui
+
+    // Exibe mensagem de sucesso
+    setFormSuccess(true);
+
+    // Limpa o formulário após envio bem-sucedido
+    reset();
+
+    // Remove a mensagem de sucesso após 3 segundos
+    setTimeout(() => {
+      setFormSuccess(false);
+    }, 3000);
+  };
 
   // Funções de submissão para diferentes propósitos
   const salvarCircuito = (data) => {
@@ -65,37 +92,6 @@ const AppForm = ({
     setConfirmationMessage(`/ ${Headermessage}`);
     setDefaultHeader(Headerdefault);
     return null;
-  };
-
-  const cadastrarCircuito = async (formData) => {
-    try {
-
-      const endpointData = await CircuitoService.getEndPoint();
-
-      const payload = {
-        ...formData,
-        token_csrf: endpointData.token_csrf,
-        json: 1,
-      };
-
-      const response = await CircuitoService.postSave(payload);
-      console.log(response); // Veja o que realmente está vindo
-
-      if (response && !response.error) {
-        // Cadastro foi bem-sucedido
-        console.log('Circuito cadastrada com sucesso:', response);
-        alert('Cadastro realizado com sucesso!');
-      } else {
-        // Houve algum erro vindo do back-end
-        console.error('Erro ao cadastrar:', response.error);
-        alert('Erro ao cadastrar: ' + response.error);
-      }
-
-    } catch (error) {
-      // Erro de rede ou exceção
-      console.error('Erro ao salvar contrato:', error);
-      alert('Erro inesperado ao salvar');
-    }
   };
 
   const setUpToastMessage = async (toastMessage, toastStrong, toastVariant) => {
@@ -132,8 +128,8 @@ const AppForm = ({
     try {
       setLoading(true);
       const response = await CircuitoService.getSecretarias();
-      console.log("Secretarias encontradas:", response); // Verificar o que está vindo
-      setSecretarias(response); // Preenche o select
+      console.log("Secretarias encontradas:", response);
+      setSecretarias(response);
     } catch (err) {
       console.error("Erro ao buscar secretarias:", err);
     } finally {
@@ -145,26 +141,37 @@ const AppForm = ({
     try {
       const response = await CircuitoService.getById(id);
       return response;
-
     } catch (err) {
       console.error('Erro circuitos:', err);
     }
   };
 
   const fetchSave = async (data) => {
+    // console.log('fetchSave/data ::', data);
+
     try {
       setLoading(false);
 
       const response = await CircuitoService.postSave(data);
       console.log('Resposta do postFilter:', response);
 
-      setUpFormHeader('Erro ao salvar os Dados', 'danger');
+      if (
+        response.status === 'erro' &&
+        response.id === 0 &&
+        response.affectedRows === 0
+      ) {
+        setUpFormHeader('Erro ao salvar os Dados', 'danger');
+        addToast('Erro', 'Erro ao salvar os Dados', 'danger', 5000);
+      }
 
-      setUpFormHeader('Dados salvos com sucesso', 'success');
-
-      setUpToastMessage('Secretaria salvo com sucesso!', 'Sucesso', 'success');
-
-      setUpToastMessage('Erro ao salvar os Dados', 'Erro', 'danger');
+      if (
+        response.status === 'success' &&
+        response.id > 0 &&
+        response.affectedRows > 0
+      ) {
+        setUpFormHeader('Dados salvos com sucesso', 'success');
+        addToast('Sucesso', 'Contato salvo com sucesso!', 'success', 3000);
+      }
 
       if (response.length > 0) {
         setLista(response);
@@ -179,53 +186,38 @@ const AppForm = ({
   };
 
   const registerform = async () => {
+    const updateData = await fetchGetById();
 
-    if (getID) {
-      const updateData = await fetchGetById(getID);
-      console.log('updateData :: ', updateData);
-
-      if (updateData) {
-        let dadosIniciais = {
-          token_csrf: token_csrf || 'erro',
-          id: updateData.id || '',
-          circ_sigla: updateData.cad_circ_sigla || '',
-          circ_nome: updateData.cad_circ_nome || '',
-          circ_active: updateData.cad_active || 'Y',
-          circ_data_ativacao: updateData.cad_circ_data_ativacao || '',
-          vel_velocidade: updateData.cad_vel_velocidade || '',
-          circ_SEI: updateData.cad_circ_SEI || '',
-          circ_data_cancelamento: updateData.cad_circ_data_cancelamento || '',
-          remember_token: updateData.remember_token || '',
-          created_by: updateData.cad_created_by || '0',
-          created_by_name: updateData.cad_created_by_name || 'unknown',
-          updated_by: updateData.cad_updated_by || '0',
-          updated_by_name: updateData.cad_updated_by_name || 'unknown',
-          created_at: updateData.created_at || '',
-          updated_at: updateData.updated_at || '',
-          deleted_at: updateData.deleted_at || null
-        };
-        reset(dadosIniciais);
-      }
+    if (updateData) {
+      let dadosIniciais = {
+        token_csrf: token_csrf || 'erro',
+        id: updateData.id || '',
+        sigla: updateData.cad_sigla || '',
+        nome: updateData.cad_nome || '',
+        active: updateData.cad_active || 'Y',
+        sei: updateData.cad_sei || '',
+        data_ativacao: updateData.cad_data_ativacao || '',
+        data_cancelamento: updateData.cad_data_cancelamento || '',
+        // vel_velocidade: updateData.cad_vel_velocidade || '',
+        remember_token: updateData.remember_token || '',
+        created_by: updateData.cad_created_by || '0',
+        created_by_name: updateData.cad_created_by_name || 'unknown',
+        updated_by: updateData.cad_updated_by || '0',
+        updated_by_name: updateData.cad_updated_by_name || 'unknown',
+        created_at: updateData.created_at || '',
+        updated_at: updateData.updated_at || '',
+        deleted_at: updateData.deleted_at || null
+      };
+      reset(dadosIniciais);
+      setShowUpdateData(updateData);
     } else {
-      reset({
+      let dadosIniciais = {
+        remember_token: token_csrf,
         token_csrf: token_csrf,
-        id: '',
-        circ_sigla: '',
-        circ_nome: '',
-        circ_active: '',
-        circ_data_ativacao: '',
-        circ_SEI: '',
-        circ_data_cancelamento: '',
-        vel_velocidade: '',
-        remember_token: '',
-        created_by: '',
-        created_by_name: '',
-        updated_by: '',
-        updated_by_name: '',
-        created_at: '',
-        updated_at: '',
-        deleted_at: ''
-      });
+        pro_origem_id: '',
+        tipo: '',
+      };
+      reset(dadosIniciais);
     }
   };
 
@@ -277,9 +269,9 @@ const AppForm = ({
       <>
         <label htmlFor="formSigla" className="form-label">Sigla*</label>
         <select
-          className={`form-select ${errors.circ_sigla ? 'is-invalid' : ''}`}
+          className={`form-select ${errors.sigla ? 'is-invalid' : ''}`}
           id="formSigla"
-          {...register('circ_sigla', { required: 'Sigla é obrigatória' })}
+          {...register('sigla', { required: 'Sigla é obrigatória' })}
         >
           <option value="">Selecione o tipo</option>
           {loading ? (
@@ -307,13 +299,13 @@ const AppForm = ({
         <label htmlFor="formNome" className="form-label">Nome*</label>
         <input
           type="text"
-          className={`form-control ${errors.circ_nome ? 'is-invalid' : ''}`}
+          className={`form-control ${errors.nome ? 'is-invalid' : ''}`}
           id="formNome"
-          {...register('circ_nome', { required: 'Nome é obrigatório' })}
+          {...register('nome', { required: 'Nome é obrigatório' })}
         />
-        {errors.circ_nome && (
+        {errors.nome && (
           <div className="invalid-feedback">
-            {errors.circ_nome.message}
+            {errors.nome.message}
           </div>
         )}
       </div>
@@ -325,17 +317,17 @@ const AppForm = ({
       <>
         <label htmlFor="formStatus" className="form-label">Status*</label>
         <select
-          className={`form-select ${errors.circ_active ? 'is-invalid' : ''}`}
+          className={`form-select ${errors.active ? 'is-invalid' : ''}`}
           id="formStatus"
-          {...register('circ_active', { required: 'Status é obrigatório' })}
+          {...register('active', { required: 'Status é obrigatório' })}
         >
           <option value="">Selecione o tipo</option>
           <option value="Y">Ativo</option>
           <option value="N">Inativo</option>
         </select>
-        {errors.circ_active && (
+        {errors.active && (
           <div className="invalid-feedback">
-            {errors.circ_active.message}
+            {errors.active.message}
           </div>
         )}
       </>
@@ -348,37 +340,37 @@ const AppForm = ({
         <label htmlFor="formAtivacao" className="form-label">Data de Ativação*</label>
         <input
           type="date"
-          className={`form-control ${errors.circ_data_ativacao ? 'is-invalid' : ''}`}
+          className={`form-control ${errors.data_ativacao ? 'is-invalid' : ''}`}
           id="formAtivacao"
-          {...register('circ_data_ativacao', { required: 'Data de ativação é obrigatório' })}
+          {...register('data_ativacao', { required: 'Data de ativação é obrigatório' })}
         />
-        {errors.circ_data_ativacao && (
+        {errors.data_ativacao && (
           <div className="invalid-feedback">
-            {errors.circ_data_ativacao.message}
+            {errors.data_ativacao.message}
           </div>
         )}
       </div>
     );
   }
 
-  const renderCampoTextVel = () => {
-    return (
-      <div className="form-group">
-        <label htmlFor="formVelocidade" className="form-label">Velocidade Mbps*</label>
-        <input
-          type="number"
-          className={`form-control ${errors.vel_velocidade ? 'is-invalid' : ''}`}
-          id="formVelocidade"
-          {...register('vel_velocidade', { required: 'Velocidade é obrigatória' })}
-        />
-        {errors.vel_velocidade && (
-          <div className="invalid-feedback">
-            {errors.vel_velocidade.message}
-          </div>
-        )}
-      </div>
-    );
-  }
+  // const renderCampoTextVel = () => {
+  //   return (
+  //     <div className="form-group">
+  //       <label htmlFor="formVelocidade" className="form-label">Velocidade Mbps*</label>
+  //       <input
+  //         type="number"
+  //         className={`form-control ${errors.vel_velocidade ? 'is-invalid' : ''}`}
+  //         id="formVelocidade"
+  //         {...register('vel_velocidade', { required: 'Velocidade é obrigatória' })}
+  //       />
+  //       {errors.vel_velocidade && (
+  //         <div className="invalid-feedback">
+  //           {errors.vel_velocidade.message}
+  //         </div>
+  //       )}
+  //     </div>
+  //   );
+  // }
 
   const renderCampoTextSei = () => {
     return (
@@ -386,13 +378,13 @@ const AppForm = ({
         <label htmlFor="formSei" className="form-label">SEI*</label>
         <input
           type="text"
-          className={`form-control ${errors.circ_SEI ? 'is-invalid' : ''}`}
+          className={`form-control ${errors.sei ? 'is-invalid' : ''}`}
           id="formSei"
-          {...register('circ_SEI', { required: 'SEI é obrigatório' })}
+          {...register('sei', { required: 'SEI é obrigatório' })}
         />
-        {errors.circ_SEI && (
+        {errors.sei && (
           <div className="invalid-feedback">
-            {errors.circ_SEI.message}
+            {errors.sei.message}
           </div>
         )}
       </div>
@@ -473,7 +465,7 @@ const AppForm = ({
 
         <form
           className="nav-item"
-          onSubmit={handleSubmit(cadastrarCircuito)}
+          onSubmit={handleSubmit(salvarCircuito)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -532,10 +524,10 @@ const AppForm = ({
                     {/* CAMPO SEI */}
                     {renderCampoSelectAtivacao()}
                   </div>
+                    {/* CAMPO DATA INÍCIO
                   <div className="col-md-3">
-                    {/* CAMPO DATA INÍCIO */}
                     {renderCampoTextVel()}
-                  </div>
+                  </div>*/}
                   <div className="col-md-3">
                     {/* CAMPO DATA FIM */}
                     {renderCampoTextSei()}

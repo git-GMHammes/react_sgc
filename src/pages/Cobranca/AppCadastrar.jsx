@@ -7,7 +7,6 @@ const AppCadastrar = () => {
 
   const [token_csrf, setTokenCsrf] = useState('');
 
-
   const fetchEndpointCobranca = async () => {
     try {
       const response = await CobrancaService.getEndPoint();
@@ -52,7 +51,7 @@ const AppCadastrar = () => {
     <div className={`container`}>
       <AppForm
         token_csrf={token_csrf}
-        getID={'17'}
+        // getID={'17'}
       />
     </div>
   );
