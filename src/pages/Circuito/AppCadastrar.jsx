@@ -47,10 +47,9 @@ const AppCadastrar = () => {
     }, []);
 
     return (
-        <div>
+        <div className={`container`}>
             <AppForm
                 token_csrf={token_csrf}
-                getID={''}
             />
         </div>
     );

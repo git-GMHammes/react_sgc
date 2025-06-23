@@ -17,8 +17,8 @@ const api = axios.create({
 // Serviço para gerenciar circuitos
 const CircuitoService = {
 
-    getEndPoint: async () => {
-        let url = '/circuito/endpoint/exibir';
+    getEndPoint: async (parameter = null) => {
+        let url = `/circuito/endpoint/exibir`;
 
         if (parameter === null) {
             url = `/circuito/endpoint/exibir`;

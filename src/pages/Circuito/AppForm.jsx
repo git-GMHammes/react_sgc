@@ -23,6 +23,10 @@ const AppForm = ({
   const [toastMessages, setToastMessages] = useState([]);
   const [showUpdateData, setShowUpdateData] = useState([]);
   const [formSuccess, setFormSuccess] = useState(false);
+  const ids = secretarias.map(s => s.id);
+  const duplicados = ids.filter((id, idx) => ids.indexOf(id) !== idx);
+  // console.log("IDs duplicados:", duplicados);
+
 
   // Configuração do formulário com react-hook-form
   const {
@@ -38,11 +42,13 @@ const AppForm = ({
       sigla: '',
       status: '',
       active: 'Y',
+      status: 'Ativo',
+      operacao: '',
       nome: '',
       data_ativacao: '',
       data_cancelamento: '',
       sei: '',
-      // vel_velocidade: '',
+      velocidade: '',
       remember_token: '',
       created_by: '',
       created_by_name: '',
@@ -94,34 +100,26 @@ const AppForm = ({
     return null;
   };
 
-  const setUpToastMessage = async (toastMessage, toastStrong, toastVariant) => {
+  const addToast = (title, message, variant = 'info', delay = 5000) => {
+    const newToast = {
+      id: Date.now() + Math.random(), // ID único
+      title: title,
+      body: message,
+      variant: variant,
+      delay: delay,
+      autohide: true,
+      time: new Date().toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    };
 
-    setMessageToast(toastMessage);
+    setToastMessages(prev => [...prev, newToast]);
 
+    // Remove o toast após o delay
     setTimeout(() => {
-      if (messageToast !== '...') {
-        setCustomToasts(prev => [
-          {
-            ...prev[0],
-            title: "Cadastro de Circuito",
-            strong: toastStrong,
-            time: "agora",
-            delay: 1000,
-            variant: toastVariant,
-            opacity: "25",
-            renderChildren: () => (
-              <div className="d-flex align-items-center">
-                <i className="bi bi-check-circle me-2"></i>
-                <span>{messageToast}</span>
-              </div>
-            )
-          }
-        ]);
-      }
-    }, 300);
-    setShowToast(true);
-
-    return null;
+      setToastMessages(prev => prev.filter(toast => toast.id !== newToast.id));
+    }, delay);
   };
 
   const fetchSecretarias = async () => {
@@ -195,10 +193,12 @@ const AppForm = ({
         sigla: updateData.cad_sigla || '',
         nome: updateData.cad_nome || '',
         active: updateData.cad_active || 'Y',
+        status: updateData.cad_status || 'Ativo',
         sei: updateData.cad_sei || '',
+        operacao: updateData.circ_operacao || '',
         data_ativacao: updateData.cad_data_ativacao || '',
         data_cancelamento: updateData.cad_data_cancelamento || '',
-        // vel_velocidade: updateData.cad_vel_velocidade || '',
+        velocidade: updateData.cad_velocidade || '',
         remember_token: updateData.remember_token || '',
         created_by: updateData.cad_created_by || '0',
         created_by_name: updateData.cad_created_by_name || 'unknown',
@@ -267,7 +267,7 @@ const AppForm = ({
   const renderCampoSelectSigla = () => {
     return (
       <>
-        <label htmlFor="formSigla" className="form-label">Sigla*</label>
+        <label htmlFor="formSigla" className="form-label">Secretaria*</label>
         <select
           className={`form-select ${errors.sigla ? 'is-invalid' : ''}`}
           id="formSigla"
@@ -278,7 +278,7 @@ const AppForm = ({
             <option>Carregando...</option>
           ) : (
             secretarias.map((sec) => (
-              <option key={sec.id} value={sec.id}>
+              <option key={sec.id} value={sec.sigla}>
                 {sec.cad_sigla_pronome_tratamento}
               </option>
             ))
@@ -312,13 +312,13 @@ const AppForm = ({
     );
   }
 
-  const renderCampoSelectStatus = () => {
+  const renderCampoSelectActive = () => {
     return (
       <>
-        <label htmlFor="formStatus" className="form-label">Status*</label>
+        <label htmlFor="formActive" className="form-label">Status*</label>
         <select
           className={`form-select ${errors.active ? 'is-invalid' : ''}`}
-          id="formStatus"
+          id="formActive"
           {...register('active', { required: 'Status é obrigatório' })}
         >
           <option value="">Selecione o tipo</option>
@@ -328,6 +328,29 @@ const AppForm = ({
         {errors.active && (
           <div className="invalid-feedback">
             {errors.active.message}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  const renderCampoSelectOperacao = () => {
+    return (
+      <>
+        <label htmlFor="formOperacao" className="form-label">Operação*</label>
+        <select
+          className={`form-select ${errors.operacao ? 'is-invalid' : ''}`}
+          id="formOperacao"
+          {...register('operacao', { required: 'Operação é obrigatório' })}
+        >
+          <option value="">Selecione o tipo</option>
+          <option value="">Normal</option>
+          <option value="">Lento</option>
+          <option value="">Desativado</option>
+        </select>
+        {errors.operacao && (
+          <div className="invalid-feedback">
+            {errors.operacao.message}
           </div>
         )}
       </>
@@ -353,24 +376,24 @@ const AppForm = ({
     );
   }
 
-  // const renderCampoTextVel = () => {
-  //   return (
-  //     <div className="form-group">
-  //       <label htmlFor="formVelocidade" className="form-label">Velocidade Mbps*</label>
-  //       <input
-  //         type="number"
-  //         className={`form-control ${errors.vel_velocidade ? 'is-invalid' : ''}`}
-  //         id="formVelocidade"
-  //         {...register('vel_velocidade', { required: 'Velocidade é obrigatória' })}
-  //       />
-  //       {errors.vel_velocidade && (
-  //         <div className="invalid-feedback">
-  //           {errors.vel_velocidade.message}
-  //         </div>
-  //       )}
-  //     </div>
-  //   );
-  // }
+  const renderCampoTextVel = () => {
+    return (
+      <div className="form-group">
+        <label htmlFor="formVelocidade" className="form-label">Velocidade Mbps*</label>
+        <input
+          type="number"
+          className={`form-control ${errors.velocidade ? 'is-invalid' : ''}`}
+          id="formVelocidade"
+          {...register('velocidade', { required: 'Velocidade é obrigatória' })}
+        />
+        {errors.velocidade && (
+          <div className="invalid-feedback">
+            {errors.velocidade.message}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const renderCampoTextSei = () => {
     return (
@@ -387,6 +410,84 @@ const AppForm = ({
             {errors.sei.message}
           </div>
         )}
+      </div>
+    );
+  }
+
+  const renderCampoSelectServico = () => {
+    return (
+      <>
+        <label htmlFor="formService" className="form-label">Lote*</label>
+        <select
+          className={`form-select ${errors.tipo_servico ? 'is-invalid' : ''}`}
+          id="formService"
+          {...register('tipo_servico', { required: 'Lote é obrigatório' })}
+        >
+          <option value="">Selecione o tipo</option>
+          <option value="">Lote 1 MPLS</option>
+          <option value="">Lote 2 IP</option>
+        </select>
+        {errors.tipo_servico && (
+          <div className="invalid-feedback">
+            {errors.tipo_servico.message}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  const renderCampoSelectLink = () => {
+    return (
+      <>
+        <label htmlFor="formLink" className="form-label">Link*</label>
+        <select
+          className={`form-select ${errors.link ? 'is-invalid' : ''}`}
+          id="formLink"
+          {...register('link', { required: 'Link é obrigatório' })}
+        >
+          <option value="">Selecione o tipo</option>
+          <option value="">Básico</option>
+          <option value="">Crítico</option>
+        </select>
+        {errors.link && (
+          <div className="invalid-feedback">
+            {errors.link.message}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  const renderCampoSelecEmpresa = () => {
+    return (
+      <div className="form-group">
+        <label htmlFor="formEmpresa" className="form-label">Empresa*</label>
+        <input
+          type="text"
+          className={`form-control ${errors.COLOCAROCAMPO ? 'is-invalid' : ''}`}
+          id="formEmpresa"
+          {...register('COLOCAROCAMPO', { required: 'COLOCAROCAMPO é obrigatório' })}
+        />
+        {errors.COLOCAROCAMPO && (
+          <div className="invalid-feedback">
+            {errors.COLOCAROCAMPO.message}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const renderCampoEstoque = () => {
+    return (
+      <div className="form-group">
+        <label htmlFor="formEstoque" className="form-label">Estoque*</label>
+        <input
+          type="text"
+          className="form-control bg-secondary"
+          id="formEstoque"
+          {...register('estoque')}
+          disabled
+        />
       </div>
     );
   }
@@ -513,24 +614,50 @@ const AppForm = ({
                     {renderCampoSelectSigla()}
                   </div>
                   <div className="col-md-3">
-                    {/* CAMPO SEI */}
+                    {/* CAMPO NOME */}
                     {renderCampoTextNomeCirc()}
                   </div>
                   <div className="col-md-3">
-                    {/* CAMPO SEI */}
-                    {renderCampoSelectStatus()}
+                    {/* CAMPO STATUS */}
+                    {renderCampoSelectActive()}
                   </div>
                   <div className="col-md-3">
-                    {/* CAMPO SEI */}
+                    {/* CAMPO OPERAÇÃO */}
+                    {renderCampoSelectOperacao()}
+                  </div>
+                </div>
+
+                <div className="row mb-3">
+                  <div className="col-md-3">
+                    {/* CAMPO DATA DE ATIVAÇÃO */}
                     {renderCampoSelectAtivacao()}
                   </div>
-                    {/* CAMPO DATA INÍCIO
+                  <div className="col-md-3">
+                    {/* CAMPO SEI */}
+                    {renderCampoTextSei()}
+                  </div>
+                  {/* CAMPO VELOCIDADE */}
                   <div className="col-md-3">
                     {renderCampoTextVel()}
-                  </div>*/}
+                  </div>
                   <div className="col-md-3">
-                    {/* CAMPO DATA FIM */}
-                    {renderCampoTextSei()}
+                    {/* CAMPO SERVIÇO*/}
+                    {renderCampoSelectServico()}
+                  </div>
+                </div>
+
+                <div className="row mb-3">
+                  <div className="col-md-3">
+                    {/* CAMPO LINK */}
+                    {renderCampoSelectLink()}
+                  </div>
+                  <div className="col-md-3">
+                    {/* CAMPO EMPRESA */}
+                    {renderCampoSelecEmpresa()}
+                  </div>
+                  <div className="col-md-3">
+                    {/* CAMPO ESTOQUE */}
+                    {renderCampoEstoque()}
                   </div>
                 </div>
 
