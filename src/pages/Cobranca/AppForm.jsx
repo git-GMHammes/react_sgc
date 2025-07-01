@@ -640,10 +640,10 @@ const AppForm = ({
     return (
       <>
         <div className="form-group">
-          <label htmlFor="formSec" className="form-label">Empresa*</label>
+          <label htmlFor="formEmp" className="form-label">Empresa*</label>
           <select
             className={`form-select ${errors.cob_cadastro_empresa_id ? 'is-invalid' : ''}`}
-            id="formSec"
+            id="formEmp"
             name='cob_cadastro_empresa_id'
             value={debugMyPrint ? getValues('cob_cadastro_empresa_id') || '' : null}
             {...register('cob_cadastro_empresa_id', { required: 'Empresa é obrigatório' })}

@@ -229,29 +229,6 @@ const CircuitoService = {
         }
     },
 
-    // Método getSecretarias com tratamento de erro completo
-    getSecretarias: async () => {
-        const url = `/secretaria/api/exibir`; // Ajuste conforme sua rota correta
-
-        try {
-            const response = await api.get(url);
-
-            if (response.data.result.dbResponse !== undefined) {
-                return response.data.result.dbResponse; // Assumindo que a resposta vem em "dbResponse"
-            } else {
-                return [];
-            }
-        } catch (error) {
-            // Tratamento específico para erro 404
-            if (error.response && error.response.status === 404) {
-                return { error: `Endereço [getSecretarias] => ${url} não encontrado`, status: 404 };
-            }
-
-            console.error('Erro em getSecretarias:', error);
-            throw error;
-        }
-    }
-
 }
 
 export default CircuitoService;
