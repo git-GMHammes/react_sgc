@@ -1,10 +1,10 @@
-// C:\laragon\www\sgcpro\src\public\script\react_modelo_v1\frontend\src\services\empresa.js
+// C:\laragon\www\sgcpro\src\public\script\react_modelo_v1\frontend\src\services\velocidade.js
 import axios from 'axios';
 import { getBaseApi } from '../config/env';
 
 // Obter a URL base do ambiente atual
 const baseUrl = getBaseApi();
-// console.log('baseUrl (C:/laragon/www/sgcpro/src/public/script/react_modelo_v1/frontend/src/services/circuito.js):', baseUrl);
+// console.log('baseUrl (C:/laragon/www/sgcpro/src/public/script/react_modelo_v1/frontend/src/services/velocidade.js):', baseUrl);
 
 // Configuração base do axios
 const api = axios.create({
@@ -15,16 +15,16 @@ const api = axios.create({
     timeout: 30000
 });
 
-// Serviço para gerenciar empresas
-const EmpresaService = {
+// Serviço para gerenciar velocidades
+const VelocidadeService = {
 
     getEndPoint: async (parameter = null) => {
-        let url = `/empresa/endpoint/exibir`;
+        let url = `/velocidade/endpoint/exibir`;
 
         if (parameter === null) {
-            url = `/empresa/endpoint/exibir`;
+            url = `/velocidade/endpoint/exibir`;
         } else {
-            url = `/empresa/endpoint/${parameter}`;
+            url = `/velocidade/endpoint/${parameter}`;
         }
         let gov_br = [];
         let token_csrf = '';
@@ -70,7 +70,7 @@ const EmpresaService = {
     // Método getAll com tratamento de erro completo
     getAll: async (page = 1, limit = 10) => {
 
-        const url = `/empresa/api/exibir?page=${page}&limit=${limit}`;
+        const url = `/velocidade/api/exibir?page=${page}&limit=${limit}`;
 
         try {
             const response = await api.get(url);
@@ -94,7 +94,7 @@ const EmpresaService = {
     // Método getPagination com tratamento de erro completo
     getPagination: async (page = 1, limit = 10) => {
 
-        const url = `/empresa/api/exibir?page=${page}&limit=${limit}`;
+        const url = `/velocidade/api/exibir?page=${page}&limit=${limit}`;
 
         try {
             const response = await api.get(url);
@@ -117,7 +117,7 @@ const EmpresaService = {
 
     // Método getById com tratamento de erro completo
     getById: async (id) => {
-        const url = `/empresa/api/exibir/${id}`;
+        const url = `/velocidade/api/exibir/${id}`;
 
         try {
             const response = await api.get(url);
@@ -142,8 +142,8 @@ const EmpresaService = {
     // Método postFilter com tratamento de erro completo
     postFilter: async (data, page = 1, limit = 10) => {
 
-        const url = `/empresa/api/filtrar?page=${page}&limit=${limit}`;
-        // console.log('url (C:/laragon/www/sgcpro/src/public/script/react_modelo_v1/frontend/src/services/empresa.js):', url);
+        const url = `/velocidade/api/filtrar?page=${page}&limit=${limit}`;
+        // console.log('url (C:/laragon/www/sgcpro/src/public/script/react_modelo_v1/frontend/src/services/velocidade.js):', url);
 
         try {
             const response = await api.post(url, data);
@@ -167,8 +167,8 @@ const EmpresaService = {
     // Método postSalvar com tratamento de erro completo
     postSave: async (data) => {
 
-        const url = `/empresa/api/salvar`;
-        // console.log('url (C:/laragon/www/sgcpro/src/public/script/react_modelo_v1/frontend/src/services/empresa.js):', url);
+        const url = `/velocidade/api/salvar`;
+        // console.log('url (C:/laragon/www/sgcpro/src/public/script/react_modelo_v1/frontend/src/services/velocidade.js):', url);
         let idSave = 0;
         let buildReturn = {
             status: `erro`,
@@ -229,4 +229,4 @@ const EmpresaService = {
 
 }
 
-export default EmpresaService;
+export default VelocidadeService;

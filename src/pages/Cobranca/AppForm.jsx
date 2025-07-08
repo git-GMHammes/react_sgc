@@ -11,8 +11,10 @@ import ContatoService from '../../services/contato';
 import TelefoneService from '../../services/telefone';
 import EmailService from '../../services/email';
 import { Alert, Spinner } from 'react-bootstrap';
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const AppForm = ({
+  getURI = [],
   token_csrf = {},
   getID = null
 }) => {
@@ -23,43 +25,23 @@ const AppForm = ({
   const [contatos, setContatos] = useState([]);
   const [telefones, setTelefones] = useState([]);
   const [emails, setEmails] = useState([]);
-  const [tokenCsrf, setTokenCsrf] = useState('');
   const [lista, setLista] = useState([]);
   const [debugMyPrint, setDebugMyPrint] = useState(false);
   const [loading, setLoading] = useState(true);
   const [defaultHeader, setDefaultHeader] = useState('primary');
   const [confirmationMessage, setConfirmationMessage] = useState('');
-  const [messageToast, setMessageToast] = useState('...');
+  const [toastMessages, setToastMessages] = useState([]);
   const [showUpdateData, setShowUpdateData] = useState([]);
 
-  const [showToast, setShowToast] = useState(false);
-  const [customToasts, setCustomToasts] = useState([
-    {
-      title: "Toast com Spinner",
-      strong: "Processando",
-      time: "agora",
-      variant: "info",
-      opacity: "25",
-      // Em vez de fornecer o JSX diretamente, use uma função
-      renderChildren: () => (
-        <div className="d-flex align-items-center">
-          <Spinner animation="border" size="sm" className="me-2" />
-          <span>{messageToast}</span>
-          {/* sigla_pronome_tratamento: '', */}
-        </div>
-      )
-    }
-  ]);
-
   // Configuração do formulário com react-hook-form
-  const { register, control, setValue, getValues, reset, formState: { errors }, handleSubmit } = useForm({
+  const { register, setValue, reset, formState: { errors }, handleSubmit } = useForm({
     defaultValues: {
       token_csrf: token_csrf,
 
       // cob (cadastro principal)
       id: '',
-      cob_circuito_id: '',
-      cob_cadastro_secretaria_id: '',
+      circuito_id: '',
+      cadastro_secretaria_id: '',
       cob_cadastro_empresa_id: '',
       cob_active: '',
       cob_dia_cobrado: '',
@@ -378,8 +360,8 @@ const AppForm = ({
           token_csrf: token_csrf || 'erro',
 
           id: updateData.id || '',
-          cob_circuito_id: updateData.cob_circuito_id || '',
-          cob_cadastro_secretaria_id: updateData.cob_cadastro_secretaria_id || '',
+          circuito_id: updateData.cob_circuito_id || '',
+          cadastro_secretaria_id: updateData.cob_cadastro_secretaria_id || '',
           cob_cadastro_empresa_id: updateData.cob_cadastro_empresa_id || '',
           cob_active: updateData.cob_active || '',
           cob_dia_cobrado: updateData.cob_dia_cobrado || '',
@@ -483,8 +465,8 @@ const AppForm = ({
       reset({
         token_csrf: token_csrf,
         id: '',
-        cob_circuito_id: '',
-        cob_cadastro_secretaria_id: '',
+        circuito_id: '',
+        cadastro_secretaria_id: '',
         cob_cadastro_empresa_id: '',
         cob_active: '',
         cob_dia_cobrado: '',
@@ -675,11 +657,11 @@ const AppForm = ({
         <div className="form-group">
           <label htmlFor="formSec" className="form-label">Circuito*</label>
           <select
-            className={`form-select ${errors.cob_circuito_id ? 'is-invalid' : ''}`}
+            className={`form-select ${errors.circuito_id ? 'is-invalid' : ''}`}
             id="formSec"
-            name='cob_circuito_id'
-            value={debugMyPrint ? getValues('cob_circuito_id') || '' : null}
-            {...register('cob_circuito_id', { required: 'Circuito é obrigatório' })}
+            name='circuito_id'
+            value={debugMyPrint ? getValues('circuito_id') || '' : null}
+            {...register('circuito_id', { required: 'Circuito é obrigatório' })}
           >
             <option value="">Selecione o tipo</option>
             {loading ? (
@@ -708,11 +690,11 @@ const AppForm = ({
         <div className="form-group">
           <label htmlFor="formSec" className="form-label">Secretaria*</label>
           <select
-            className={`form-select ${errors.cob_cadastro_secretaria_id ? 'is-invalid' : ''}`}
+            className={`form-select ${errors.cadastro_secretaria_id ? 'is-invalid' : ''}`}
             id="formSec"
-            name='cob_cadastro_secretaria_id'
-            value={debugMyPrint ? getValues('cob_cadastro_secretaria_id') || '' : null}
-            {...register('cob_cadastro_secretaria_id', { required: 'Secretaria é obrigatório' })}
+            name='cadastro_secretaria_id'
+            value={debugMyPrint ? getValues('cadastro_secretaria_id') || '' : null}
+            {...register('cadastro_secretaria_id', { required: 'Secretaria é obrigatório' })}
           >
             <option value="">Selecione o tipo</option>
             {loading ? (

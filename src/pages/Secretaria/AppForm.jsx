@@ -10,12 +10,12 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { start } from '@popperjs/core';
 
 const AppForm = ({
+  getURI = [],
   token_csrf = {},
   getID = null
 }) => {
   const [debugMyPrint, setDebugMyPrint] = useState(true);
   const [secretarias, setSecretarias] = useState([]);
-  const [tokenCsrf, setTokenCsrf] = useState('');
   const [loading, setLoading] = useState(true);
   const [defaultHeader, setDefaultHeader] = useState('primary');
   const [confirmationMessage, setConfirmationMessage] = useState('');
@@ -31,7 +31,7 @@ const AppForm = ({
       nome: '',
       cnpj_cpf: '',
       tipo: 'Secretaria',
-      active: '',
+      active: 'Y',
       sigla_pronome_tratamento: '',
       created_by: '',
       created_by_name: '',
@@ -46,7 +46,7 @@ const AppForm = ({
   // Observar mudanças no campo cad_cnpj_cpf para formatação
   const cnpjCpfValue = useWatch({
     control,
-    name: 'cad_cnpj_cpf',
+    name: 'cnpj_cpf',
   });
 
   // Funções de submissão para diferentes propósitos
@@ -71,65 +71,26 @@ const AppForm = ({
     return null;
   };
 
-  const cadastrarSecretaria = async (formData) => {
-    try {
+  const addToast = (title, message, variant = 'info', delay = 5000) => {
+    const newToast = {
+      id: Date.now() + Math.random(), // ID único
+      title: title,
+      body: message,
+      variant: variant,
+      delay: delay,
+      autohide: true,
+      time: new Date().toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    };
 
-      // 1. Obtém token CSRF antes do envio
-      const endpointData = await SecretariaService.getEndPoint();
+    setToastMessages(prev => [...prev, newToast]);
 
-      // 2. Monta o payload com token e json: 1
-      const payload = {
-        ...formData,
-        token_csrf: endpointData.token_csrf,
-        json: 1,
-      };
-
-      const response = await SecretariaService.postSave(payload);
-
-      if (response && !response.error) {
-        // Cadastro foi bem-sucedido
-        console.log('Secretaria cadastrada com sucesso:', response);
-        alert('Cadastro realizado com sucesso!');
-      } else {
-        // Houve algum erro vindo do back-end
-        console.error('Erro ao cadastrar:', response.error);
-        alert('Erro ao cadastrar: ' + response.error);
-      }
-    } catch (error) {
-      // Erro de rede ou exceção
-      console.error('Erro ao salvar secretaria:', error);
-      alert('Erro inesperado ao salvar');
-    }
-  };
-
-  const setUpToastMessage = async (toastMessage, toastStrong, toastVariant) => {
-
-    setMessageToast(toastMessage);
-
+    // Remove o toast após o delay
     setTimeout(() => {
-      if (messageToast !== '...') {
-        setCustomToasts(prev => [
-          {
-            ...prev[0],
-            title: "Cadastro de Secretaria",
-            strong: toastStrong,
-            time: "agora",
-            delay: 1000,
-            variant: toastVariant,
-            opacity: "25",
-            renderChildren: () => (
-              <div className="d-flex align-items-center">
-                <i className="bi bi-check-circle me-2"></i>
-                <span>{messageToast}</span>
-              </div>
-            )
-          }
-        ]);
-      }
-    }, 300);
-    setShowToast(true);
-
-    return null;
+      setToastMessages(prev => prev.filter(toast => toast.id !== newToast.id));
+    }, delay);
   };
 
   const fetchSecretarias = async () => {
@@ -161,15 +122,23 @@ const AppForm = ({
       setLoading(false);
 
       const response = await SecretariaService.postSave(data);
-      console.log('Resposta do postFilter:', response);
+      if (
+        response.status === 'erro' &&
+        response.id === 0 &&
+        response.affectedRows === 0
+      ) {
+        setUpFormHeader('Erro ao salvar os Dados', 'danger');
+        addToast('Erro', 'Erro ao salvar os Dados', 'danger', 5000);
+      }
 
-      setUpFormHeader('Erro ao salvar os Dados', 'danger');
-
-      setUpFormHeader('Dados salvos com sucesso', 'success');
-
-      setUpToastMessage('Secretaria salvo com sucesso!', 'Sucesso', 'success');
-
-      setUpToastMessage('Erro ao salvar os Dados', 'Erro', 'danger');
+      if (
+        response.status === 'success' &&
+        response.id > 0 &&
+        response.affectedRows > 0
+      ) {
+        setUpFormHeader('Dados salvos com sucesso', 'success');
+        addToast('Sucesso', 'Contato salvo com sucesso!', 'success', 3000);
+      }
 
       if (response.length > 0) {
         setLista(response);
@@ -183,50 +152,38 @@ const AppForm = ({
   };
 
   const registerform = async () => {
+    const updateData = await fetchGetById();
+    // console.log('updateData :: ', updateData);
 
-    if (getID) {
-      const updateData = await fetchGetById(getID);
-      console.log('updateData :: ', updateData);
-
-      if (updateData) {
-        let dadosIniciais = {
-          token_csrf: token_csrf || 'erro',
-          id: updateData.id || '',
-          pro_origem_id: updateData.orig_id || '2',
-          tipo: updateData.cad_tipo || 'Secretaria',
-          sigla_pronome_tratamento: updateData.cad_sigla_pronome_tratamento || '',
-          cnpj_cpf: updateData.cad_cnpj_cpf || '',
-          nome: updateData.cad_nome || '',
-          remember_token: updateData.cad_remember_token || token_csrf,
-          created_by: updateData.cad_created_by || '0',
-          created_by_name: updateData.cad_created_by_name || 'unknown',
-          updated_by: updateData.cad_updated_by || '0',
-          updated_by_name: updateData.cad_updated_by_name || 'unknown',
-          created_at: updateData.created_at || '',
-          updated_at: updateData.updated_at || '',
-          deleted_at: updateData.deleted_at || null
-        };
-        reset(dadosIniciais);
-      }
+    if (updateData) {
+      let dadosIniciais = {
+        token_csrf: token_csrf || 'erro',
+        id: updateData.id || '',
+        pro_origem_id: updateData.orig_id || '2',
+        tipo: updateData.cad_tipo || 'Secretaria',
+        sigla_pronome_tratamento: updateData.cad_sigla_pronome_tratamento || '',
+        cnpj_cpf: updateData.cad_cnpj_cpf || '',
+        nome: updateData.cad_nome || '',
+        remember_token: updateData.cad_remember_token || token_csrf,
+        created_by: updateData.cad_created_by || '0',
+        created_by_name: updateData.cad_created_by_name || 'unknown',
+        updated_by: updateData.cad_updated_by || '0',
+        updated_by_name: updateData.cad_updated_by_name || 'unknown',
+        created_at: updateData.created_at || '',
+        updated_at: updateData.updated_at || '',
+        deleted_at: updateData.deleted_at || null
+      };
+      reset(dadosIniciais);
+      setShowUpdateData(updateData);
     } else {
       // Cadastro: limpa o formulário/inicializa com os valores default
-      reset({
+      let dadosIniciais = {
+        remember_token: token_csrf,
         token_csrf: token_csrf,
-        id: '',
         pro_origem_id: '2',
-        nome: '',
-        cnpj_cpf: '',
-        tipo: 'Secretaria',
-        active: '',
-        sigla_pronome_tratamento: '',
-        created_by: '',
-        created_by_name: '',
-        updated_by: '',
-        updated_by_name: '',
-        created_at: '',
-        updated_at: '',
-        deleted_at: ''
-      });
+        tipo: 'Secretaria'
+      };
+      reset(dadosIniciais);
     }
   }
 
@@ -249,7 +206,7 @@ const AppForm = ({
       }
 
       if (value !== cnpjCpfValue) {
-        setValue('cad_cnpj_cpf', value);
+        setValue('cnpj_cpf', value);
       }
     }
 
@@ -317,10 +274,10 @@ const AppForm = ({
     }
 
     // Limpar erro específico quando o campo é alterado
-    if (errors.cad_cnpj_cpf) {
+    if (errors.cnpj_cpf) {
       setErrors({
         ...errors,
-        cad_cnpj_cpf: null
+        cnpj_cpf: null
       });
     }
   };
@@ -369,11 +326,11 @@ const AppForm = ({
         <label htmlFor="formCnpjCpf" className="form-label">CNPJ*</label>
         <input
           type="text"
-          className={`form-control ${errors.cad_cnpj_cpf ? 'is-invalid' : ''}`}
+          className={`form-control ${errors.cnpj_cpf ? 'is-invalid' : ''}`}
           onSubmit={handleCnpjCpfChange}
           id="formCnpjCpf"
           placeholder="00.000.000/0000-00"
-          {...register('cad_cnpj_cpf', {
+          {...register('cnpj_cpf', {
             required: 'CNPJ é obrigatório',
             validate: {
               validFormat: (value) => {
@@ -389,9 +346,9 @@ const AppForm = ({
             }
           })}
         />
-        {errors.cad_cnpj_cpf && (
+        {errors.cnpj_cpf && (
           <div className="invalid-feedback">
-            {errors.cad_cnpj_cpf.message}
+            {errors.cnpj_cpf.message}
           </div>
         )}
       </>
@@ -494,7 +451,7 @@ const AppForm = ({
 
         <form
           className="nav-item"
-          onSubmit={handleSubmit(cadastrarSecretaria)}
+          onSubmit={handleSubmit(salvarSecretaria)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();

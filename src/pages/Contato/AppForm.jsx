@@ -437,7 +437,7 @@ const AppForm = ({
               <option>Carregando...</option>
             ) : (
               secretarias.map((sec, index) => (
-                <option key={index} value={sec.id}>
+                <option key={index} value={sec.sigla_pronome_tratamento}>
                   {`${debugMyPrint ? sec.id : ''}`} - {sec.cad_sigla_pronome_tratamento}
                 </option>
               ))
@@ -457,10 +457,7 @@ const AppForm = ({
     return (
 
       <div className="form-group">
-        <label
-          className="form-label"
-          htmlFor="nome"
-        >
+        <label className="form-label" htmlFor="formNome">
           Nome *
         </label>
         <input

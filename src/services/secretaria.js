@@ -19,6 +19,12 @@ const SecretariaService = {
 
     getEndPoint: async () => {
         const url = '/secretaria/endpoint/salvar';
+
+        if (parameter === null) {
+            url = `/secretaria/endpoint/exibir`;
+        } else {
+            url = `/secretaria/endpoint/${parameter}`;
+        }
         let gov_br = [];
         let token_csrf = '';
         let getURI = [];
@@ -167,16 +173,52 @@ const SecretariaService = {
 
         const url = `/secretaria/api/salvar`;
         console.log('url (C:/laragon/www/sgcpro/src/public/script/react_modelo_v1/frontend/src/services/secretaria.js):', url);
+        let idSave = 0;
+        let buildReturn = {
+            status: `erro`,
+            id: 0,
+            affectedRows: 0,
+        };
 
         try {
             const response = await api.post(url, data);
-            console.log('response :: ', response);
+            // console.log('response :: ', response);
 
-            if (response.data.result.dbResponse !== undefined) {
-                return response.data.result.dbResponse;
-            } else {
-                return [];
+            // insertID
+            // updateID
+            // affectedRows
+
+            if (
+                response.data !== undefined &&
+                response.data.result !== undefined &&
+                response.data.result.insertID !== undefined
+            ) {
+                idSave = response.data.result.insertID;
             }
+
+            if (
+                response.data !== undefined &&
+                response.data.result !== undefined &&
+                response.data.result.updateID !== undefined
+            ) {
+                idSave = response.data.result.updateID;
+            }
+
+            if (
+                response.data !== undefined &&
+                response.data.status !== undefined &&
+                response.data.result.affectedRows !== null
+            ) {
+                buildReturn = {
+                    status: response.data.status,
+                    id: idSave,
+                    affectedRows: response.data.result.affectedRows,
+                };
+            }
+
+            console.log('buildReturn :: ', buildReturn);
+            return buildReturn;
+
         } catch (error) {
             // Tratamento específico para erro 404
             if (error.response && error.response.status === 404) {

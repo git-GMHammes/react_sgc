@@ -40,7 +40,7 @@ const AppListar = () => {
     const [pagination, setPagination] = useState([]);
     const [debugMyPrint, setDebugMyPrint] = useState(false);
     const [page, setPasetLimitge] = useState(1);
-    const [limit, setLimit] = useState(10);
+    const [limit, setLimit] = useState(50);
     const { width, height } = useWindowDimensions();
     const [token_csrf, setTokenCsrf] = useState('');
 
@@ -140,6 +140,7 @@ const AppListar = () => {
 
             // Obter dados usando o método getAll do EmpresaService
             const response = await EmpresaService.getAll(page, limit);
+            console.log('Total de registros retornados:', response.length);
             // console.log('src/public/script/react_modelo_v1/frontend/src/pages/Empresa/AppListar.jsx');
             // console.log('Resposta do getAll:', response);
             if (response.length > 0) {

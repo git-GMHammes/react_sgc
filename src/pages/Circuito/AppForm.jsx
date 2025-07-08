@@ -5,6 +5,8 @@ import { set, useForm, useWatch } from 'react-hook-form';
 import CircuitoService from '../../services/circuito';
 import EmpresaService from '../../services/empresa';
 import SecretariaService from '../../services/secretaria';
+import EnderecoService from '../../services/endereco';
+import VelocidadeService from '../../services/velocidade';
 import ToastsReact from '../../components/Message/Toasts';
 import JSONViewer from '../../components/JSONViewer';
 import { Alert, Spinner } from 'react-bootstrap';
@@ -34,34 +36,36 @@ const AppForm = ({
   // Configuração do formulário com react-hook-form
   const {
     register,
-    control,
-    setValue,
-    getValues,
+    handleSubmit,
     reset,
-    formState: { errors },
-    handleSubmit
+    setValue,
+    formState: { errors }
   } = useForm({
     defaultValues: {
       token_csrf: token_csrf,
       
       // circ (pro_circuito)
       id: '',
-      circ_cadastro_empresa_id: '',
-      circ_cadastro_secretaria_id: '',
-      circ_velocidade_id: '',
-      circ_endereco_id: '',
-      circ_sigla: '',
-      circ_status: 'Ativo',
-      circ_active: '',
-      circ_nome: '',
-      circ_data_ativacao: '',
-      circ_data_cancelamento: '',
-      circ_SEI: '',
-      circ_operacao: '',
-      circ_created_by: '0',
-      circ_created_by_name: 'unknown',
-      circ_updated_by: '0',
-      circ_updated_by_name: 'unknown',
+      cadastro_empresa_id: '',
+      cadastro_secretaria_id: '',
+      velocidade_id: '',
+      endereco_id: '',
+      sigla: '',
+      status: 'Ativo',
+      active: '',
+      nome: '',
+      data_ativacao: '',
+      data_cancelamento: '',
+      SEI: '',
+      operacao: '',
+      created_by: '0',
+      created_by_name: 'unknown',
+      updated_by: '0',
+      updated_by_name: 'unknown',
+      created_at: '',
+      updated_at: '',
+      deleted_at: '',
+
 
       // vel (pro_velocidade)
       vel_id: '',
@@ -79,10 +83,32 @@ const AppForm = ({
       vel_created_at: '',
       vel_updated_at: '',
       vel_deleted_at: '',
-      created_at: '',
-      updated_at: '',
-      deleted_at: null,
 
+      //end (pro_cad_endereco)
+      endereco_id: '',
+      endereco_cadastro_id: '',
+      endereco_favorito: '',
+      endereco_cep: '',
+      endereco_tipo_logradouro: '',
+      endereco_logradouro: '',
+      endereco_numero: '',
+      endereco_complemento: '',
+      endereco_bairro: '',
+      endereco_cidade: '',
+      endereco_estado: '',
+      endereco_pais: '',
+      endereco_ponto_referencia: '',
+      endereco_latitude: '',
+      endereco_longitude: '',
+      endereco_regiao: '',
+      endereco_tipo_imovel: '',
+      endereco_informacao_acesso: '',
+      endereco_area_risco: '',
+      endereco_created_by: '0',
+      endereco_created_by_name: 'unknown',
+      endereco_updated_by: '0',
+      endereco_updated_by_name: 'unknown',
+      
     }
   });
 
@@ -107,7 +133,7 @@ const AppForm = ({
   // Funções de submissão para diferentes propósitos
   const salvarCircuito = (data) => {
     fetchSave(data);
-    console.log('Salvando empresa:', data);
+    console.log('Salvando circuio:', data);
   };
 
   const limparFormulario = () => {
@@ -184,6 +210,16 @@ const AppForm = ({
     }
   };
 
+  const fetchFilterEndereco = async (data) => {
+    const response = await EnderecoService.postFilter(data);
+    return response;
+  };
+
+  const fetchFilterVelocidade = async (data) => {
+    const response = await VelocidadeService.postFilter(data);
+    return response;
+  };
+
   const fetchSave = async (data) => {
     // console.log('fetchSave/data ::', data);
 
@@ -226,10 +262,6 @@ const AppForm = ({
   const registerform = async () => {
     const updateData = await fetchGetById();
 
-    if(getID){
-      const updateData = await fetchGetById(getID);
-      // console.log('updateData :: ', updateData);
-    
       if (updateData) {
         let dadosIniciais = {
           token_csrf: token_csrf || 'erro',
@@ -253,73 +285,51 @@ const AppForm = ({
           updated_by: updateData.circ_updated_by || '0',
           updated_by_name: updateData.circ_updated_by_name || 'unknown',
 
-          // vel (pro_velocidade)
-          vel_id: updateData.vel_id || '',
-          vel_cadastro_empresa_id: updateData.vel_cadastro_empresa_id || '',
-          vel_active: updateData.vel_active || '',
-          vel_tipo_servico: updateData.vel_tipo_servico || '',
-          vel_velocidade: updateData.vel_velocidade || '',
-          vel_link: updateData.vel_link || '',
-          vel_estoque: updateData.vel_estoque || '',
-          vel_custo_unitario: updateData.vel_custo_unitario || '',
-          vel_created_by: updateData.vel_created_by || '0',
-          vel_created_by_name: updateData.vel_created_by_name || 'unknown',
-          vel_updated_by: updateData.vel_updated_by || '0',
-          vel_updated_by_name: updateData.vel_updated_by_name || 'unknown',
-          vel_created_at: updateData.vel_created_at || '',
-          vel_updated_at: updateData.vel_updated_at || '',
-          vel_deleted_at: updateData.vel_deleted_at || '',
+          tipo_servico: updateData.vel_tipo_servico || '',
+          velocidade: updateData.vel_velocidade || '',
+          link: updateData.vel_link || '',
+          estoque: updateData.vel_estoque || '',
+          custo_unitario: updateData.vel_custo_unitario || '',
+
           
+          cep: updateData.end_cep || '',
+          logradouro: updateData.end_logradouro || '',
+          cadastro_id: updateData.end_cadastro_id || '',
+          favorito: updateData.end_favorito || '',
+          cep: updateData.end_cep || '',
+          tipo_logradouro: updateData.end_tipo_logradouro || '',
+          logradouro: updateData.end_logradouro || '',
+          numero: updateData.end_numero || '',
+          complemento: updateData.end_complemento || '',
+          bairro: updateData.end_bairro || '',
+          cidade: updateData.end_cidade || '',
+          estado: updateData.end_estado || '',
+          pais: updateData.end_pais || '',
+          ponto_referencia: updateData.end_ponto_referencia || '',
+          latitude: updateData.end_latitude || '',
+          longitude: updateData.end_longitude || '',
+          regiao: updateData.end_regiao || '',
+          tipo_imovel: updateData.end_tipo_imovel || '',
+          informacao_acesso: updateData.end_informacao_acesso || '',
+          area_risco: updateData.end_area_risco || '',
+          created_by: updateData.end_created_by || '',
+          created_by_name: updateData.end_created_by_name || '',
+          updated_by: updateData.end_updated_by || '',
+          updated_by_name: updateData.end_updated_by_name || '',
+
           created_at: updateData.created_at || '',
           updated_at: updateData.updated_at || '',
           deleted_at: updateData.deleted_at || null,
 
         };
         reset(dadosIniciais);
+        setShowUpdateData(updateData);
+      } else {
+        let dadosIniciais = {
+          token_csrf: token_csrf,
+        };
+        reset(dadosIniciais);
       }
-    } else {
-      reset({
-        token_csrf: token_csrf,
-
-        id: '',
-        cadastro_empresa_id: '',
-        cadastro_secretaria_id: '',
-        velocidade_id: '',
-        endereco_id: '',
-        sigla: '',
-        status: '',
-        active: '',
-        nome: '',
-        data_ativacao: '',
-        data_cancelamento: '',
-        sei: '',
-        operacao: '',
-        created_by: '',
-        created_by_name: '',
-        updated_by: '',
-        updated_by_name: '',
-
-        vel_id: '',
-        vel_cadastro_empresa_id: '',
-        vel_active: '',
-        vel_tipo_servico: '',
-        vel_velocidade: '',
-        vel_link: '',
-        vel_estoque: '',
-        vel_custo_unitario: '',
-        vel_created_by: '',
-        vel_created_by_name: '',
-        vel_updated_by: '',
-        vel_updated_by_name: '',
-        vel_created_at: '',
-        vel_updated_at: '',
-        vel_deleted_at: '',
-        
-        created_at: '',
-        updated_at: '',
-        deleted_at: null,
-      });
-    }
   };
 
   useEffect(() => {
@@ -374,9 +384,8 @@ const AppForm = ({
           <select
             className={`form-select ${errors.circ_cadastro_empresa_id ? 'is-invalid' : ''}`}
             id="formSec"
-            name='circ_cadastro_empresa_id'
-            value={debugMyPrint ? getValues('circ_cadastro_empresa_id') || '' : null}
             {...register('circ_cadastro_empresa_id', { required: 'Empresa é obrigatório' })}
+            defaultValue = ""
           >
             <option value="">Selecione o tipo</option>
             {loading ? (
@@ -406,9 +415,8 @@ const AppForm = ({
         <select
           className={`form-select ${errors.circ_cadastro_secretaria_id ? 'is-invalid' : ''}`}
           id="formSec"
-          name='circ_cadastro_secretaria_id'
-          value={debugMyPrint ? getValues('circ_cadastro_secretaria_id') || '' : null}
           {...register('circ_cadastro_secretaria_id', { required: 'Secreataria é obrigatória' })}
+          defaultValue = ""
         >
           <option value="">Selecione o tipo</option>
           {loading ? (
@@ -427,6 +435,33 @@ const AppForm = ({
           </div>
         )}
       </>
+    );
+  }
+
+  const renderCampoTextSigla = () => {
+    return (
+
+      <div className="form-group">
+        <label
+          className="form-label"
+          htmlFor="sigla"
+        >
+          SIGLA *
+        </label>
+        <input
+          type="text"
+          className={`form-control ${errors.sigla ? "input-error" : ""}`}
+          id="sigla"
+          {...register("sigla", {
+            required: "SIGLA é obrigatório",
+            minLength: {
+              value: 3,
+              message: "SIGLA deve ter pelo menos 3 caracteres"
+            }
+          })}
+        />
+        {errors.sigla && <span className="error-message">{errors.sigla.message}</span>}
+      </div>
     );
   }
 
@@ -449,22 +484,22 @@ const AppForm = ({
     );
   }
 
-  const renderCampoSelectActive = () => {
+  const renderCampoSelectStatus = () => {
     return (
       <>
-        <label htmlFor="formActive" className="form-label">Status*</label>
+        <label htmlFor="formStatus" className="form-label">Status*</label>
         <select
-          className={`form-select ${errors.active ? 'is-invalid' : ''}`}
-          id="formActive"
-          {...register('active', { required: 'Status é obrigatório' })}
+          className={`form-select ${errors.status ? 'is-invalid' : ''}`}
+          id="formStatus"
+          {...register('status', { required: 'Status é obrigatório' })}
         >
           <option value="">Selecione o tipo</option>
           <option value="Y">Ativo</option>
           <option value="N">Inativo</option>
         </select>
-        {errors.active && (
+        {errors.status && (
           <div className="invalid-feedback">
-            {errors.active.message}
+            {errors.status.message}
           </div>
         )}
       </>
@@ -478,12 +513,13 @@ const AppForm = ({
         <select
           className={`form-select ${errors.circ_operacao ? 'is-invalid' : ''}`}
           id="formOperacao"
+          name="Operacao"
           {...register('circ_operacao', { required: 'Operação é obrigatório' })}
         >
           <option value="">Selecione o tipo</option>
-          <option value="">Normal</option>
-          <option value="">Lento</option>
-          <option value="">Desativado</option>
+          <option value="Normal">Normal</option>
+          <option value="Lento">Lento</option>
+          <option value="Desativado">Desativado</option>
         </select>
         {errors.circ_operacao && (
           <div className="invalid-feedback">
@@ -556,18 +592,18 @@ const AppForm = ({
       <>
         <label htmlFor="formService" className="form-label">Lote*</label>
         <select
-          className={`form-select ${errors.vel_tipo_servico ? 'is-invalid' : ''}`}
+          className={`form-select ${errors.tipo_servico ? 'is-invalid' : ''}`}
           id="formService"
-          {...register('vel_tipo_servico', { required: 'Lote é obrigatório' })}
+          {...register('tipo_servico', { required: 'Lote é obrigatório' })}
         >
           <option value="">Selecione o tipo</option>
-          <option value="">Lote 1 MPLS</option>
-          <option value="">Lote 2 IP</option>
+          <option value="Lote 1 MPLS">Lote 1 MPLS</option>
+          <option value="Lote 2 IP">Lote 2 IP</option>
         </select>
 
-        {errors.vel_tipo_servico && (
+        {errors.tipo_servico && (
           <div className="invalid-feedback">
-            {errors.vel_tipo_servico.message}
+            {errors.tipo_servico.message}
           </div>
         )}
       </>
@@ -579,17 +615,17 @@ const AppForm = ({
       <>
         <label htmlFor="formLink" className="form-label">Link*</label>
         <select
-          className={`form-select ${errors.vel_link ? 'is-invalid' : ''}`}
+          className={`form-select ${errors.link ? 'is-invalid' : ''}`}
           id="formLink"
-          {...register('vel_link', { required: 'Link é obrigatório' })}
+          {...register('link', { required: 'Link é obrigatório' })}
         >
           <option value="">Selecione o tipo</option>
-          <option value="">Básico</option>
-          <option value="">Crítico</option>
+          <option value="Básico">Básico</option>
+          <option value="Crítico">Crítico</option>
         </select>
-        {errors.vel_link && (
+        {errors.link && (
           <div className="invalid-feedback">
-            {errors.vel_link.message}
+            {errors.link.message}
           </div>
         )}
       </>
@@ -601,12 +637,35 @@ const AppForm = ({
       <div className="form-group">
         <label htmlFor="formEstoque" className="form-label">Estoque*</label>
         <input
-          type="text"
-          className="form-control bg-secondary"
+          type="number"
+          className={`form-control ${errors.nome ? 'is-invalid' : ''}`}
           id="formEstoque"
-          {...register('estoque')}
-          disabled
+          {...register('estoque', { required: 'Estoque é obrigatório'})}
         />
+        {errors.estoque && (
+          <div className="invalid-feedback">
+            {errors.estoque.message}
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  const renderCampoCustoUnit = () => {
+    return (
+      <div className="form-group">
+        <label htmlFor="formCusto" className="form-label">Custo Unitário*</label>
+        <input
+          type="number"
+          className={`form-control ${errors.nome ? 'is-invalid' : ''}`}
+          id="formCusto"
+          {...register('custo_unitario', { required: 'Custo Unitário é obrigatório'})}
+        />
+        {errors.custo_unitario && (
+          <div className="invalid-feedback">
+            {errors.custo_unitario.message}
+          </div>
+        )}
       </div>
     );
   }
@@ -741,8 +800,12 @@ const AppForm = ({
                     {renderCampoTextNomeCirc()}
                   </div>
                   <div className="col-md-3">
+                    {/* CAMPO NOME */}
+                    {renderCampoTextSigla()}
+                  </div>
+                  <div className="col-md-3">
                     {/* CAMPO STATUS */}
-                    {renderCampoSelectActive()}
+                    {renderCampoSelectStatus()}
                   </div>
                 </div>
 
@@ -777,6 +840,10 @@ const AppForm = ({
                   <div className="col-md-3">
                     {/* CAMPO ESTOQUE */}
                     {renderCampoEstoque()}
+                  </div>
+                  <div className="col-md-3">
+                    {/* CAMPO CUSTO UNITÁRIO */}
+                    {renderCampoCustoUnit()}
                   </div>
                 </div>
 

@@ -20,9 +20,9 @@ const ContatoService = {
     getEndPoint: async (parameter = null) => {
         let url = `/contato/endpoint/exibir`;
 
-        if( parameter === null){
+        if(parameter === null){
             url = `/contato/endpoint/exibir`; 
-        }else{
+        } else{
             url = `/contato/endpoint/${parameter}`; 
         }
         // console.log('url :: ', url);

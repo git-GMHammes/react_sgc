@@ -21,7 +21,7 @@ const api = axios.create({
 // Serviço para gerenciar cobranças
 const CobrancaService = {
 
-    getEndPoint: async () => {
+    getEndPoint: async (parameter = null) => {
         let url = '/cobranca/endpoint/exibir';
 
         if (parameter === null) {

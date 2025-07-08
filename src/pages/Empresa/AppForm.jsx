@@ -14,6 +14,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { start } from '@popperjs/core';
 
 const AppForm = ({
+  getURI = [],
   token_csrf = {},
   getID = null
 }) => {
@@ -23,11 +24,11 @@ const AppForm = ({
   const [emails, setEmails] = useState([]);
   const [telefones, setTelefones] = useState([]);
   const [enderecos, setEnderecos] = useState([]);
-  const [tokenCsrf, setTokenCsrf] = useState('');
   const [loading, setLoading] = useState(true);
   const [defaultHeader, setDefaultHeader] = useState('primary');
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [messageToast, setMessageToast] = useState('...');
+  const [toastMessages, setToastMessages] = useState([]);
   const [showToast, setShowToast] = useState(false);
   const [showUpdateData, setShowUpdateData] = useState([]);
 
@@ -49,103 +50,32 @@ const AppForm = ({
   ]);
 
   // Configuração do formulário com react-hook-form
-  const { register, control, setValue, getValues, reset, formState: { errors }, handleSubmit } = useForm({
+  const { register, control, setValue, reset, formState: { errors }, handleSubmit } = useForm({
     defaultValues: {
+
       token_csrf: token_csrf,
-
-      // cad (cadastro principal)
-      id: '',
-      cad_pro_origem_id: '',
-      cad_tipo: '',
-      cad_active: 'Y',
-      cad_sigla_pronome_tratamento: '',
-      cad_nome: '',
-      cad_cnpj_cpf: '',
-      cad_remember_token: '',
-      cad_created_by: '0',
-      cad_created_by_name: 'unknown',
-      cad_updated_by: '0',
-      cad_updated_by_name: 'unknown',
-
-      // orig (pro_cad_origem)
-      orig_id: '4',
-      orig_form_on: '',
-      orig_descricao: '',
-      orig_informação: '',
-      orig_created_by: '0',
-      orig_created_by_name: 'unknown',
-      orig_updated_by: '0',
-      orig_updated_by_name: 'unknown',
-      orig_created_at: '',
-      orig_updated_at: '',
-      orig_deleted_at: '',
-
-      // mail (pro_cad_email)
-      mail_id: '',
-      mail_email: '',
-      mail_favorito: 'Y',
-      mail_cadastro_id: '',
-      mail_created_by: '0',
-      mail_created_by_name: 'unknown',
-      mail_updated_by: '0',
-      mail_updated_by_name: 'unknown',
-      mail_created_at: '',
-      mail_updated_at: '',
-      mail_deleted_at: '',
-
-      // tel (pro_cad_telefone)
-      tel_id: '',
-      tel_numero: '',
-      tel_tipo: '',
-      tel_favorito: 'Y',
-      tel_cadastro_id: '',
-      tel_created_by: '0',
-      tel_created_by_name: 'unknown',
-      tel_updated_by: '0',
-      tel_updated_by_name: 'unknown',
-      tel_created_at: '',
-      tel_updated_at: '',
-      tel_deleted_at: '',
-
-      // end (pro_cad_endereco)
-      end_id: '',
-      end_favorito: 'Y',
-      end_cadastro_id: '',
-      end_cep: '',
-      end_tipo_logradouro: '',
-      end_logradouro: '',
-      end_numero: '',
-      end_complemento: '',
-      end_bairro: '',
-      end_cidade: '',
-      end_estado: '',
-      end_pais: '',
-      end_ponto_referencia: '',
-      end_latitude: '',
-      end_longitude: '',
-      end_regiao: '',
-      end_tipo_imovel: '',
-      end_informacao_acesso: '',
-      end_area_risco: '',
-      end_created_by: '0',
-      end_created_by_name: 'unknown',
-      end_updated_by: '0',
-      end_updated_by_name: 'unknown',
-      end_created_at: '',
-      end_updated_at: '',
-      end_deleted_at: '',
-
-      // campos de controle comuns
+      pro_origem_id: '4',
+      tipo: '',
+      active: 'Y',
+      sigla_pronome_tratamento: '',
+      nome: '',
+      cnpj_cpf: '',
+      remember_token: '',
+      created_by: '0',
+      created_by_name: 'unknown',
+      updated_by: '0',
+      updated_by_name: 'unknown',
       created_at: '',
       updated_at: '',
       deleted_at: null,
+
     }
   });
 
-  // Observar mudanças no campo cad_cnpj_cpf para formatação
+  // Observar mudanças no campo cnpj_cpf para formatação
   const cnpjCpfValue = useWatch({
     control,
-    name: 'cad_cnpj_cpf',
+    name: 'cnpj_cpf',
   });
 
   // Funções de submissão para diferentes propósitos
@@ -170,35 +100,26 @@ const AppForm = ({
     // console.log('Ação cancelar');
   };
 
-  const cadastrarEmpresa = async (formData) => {
-    try {
+  const addToast = (title, message, variant = 'info', delay = 5000) => {
+    const newToast = {
+      id: Date.now() + Math.random(), // ID único
+      title: title,
+      body: message,
+      variant: variant,
+      delay: delay,
+      autohide: true,
+      time: new Date().toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    };
 
-      // 1. Obtém token CSRF antes do envio
-      const endpointData = await EmpresaService.getEndPoint();
+    setToastMessages(prev => [...prev, newToast]);
 
-      // 2. Monta o payload com token e json: 1
-      const payload = {
-        ...formData,
-        token_csrf: endpointData.token_csrf,
-        json: 1,
-      };
-
-      const response = await EmpresaService.postSave(payload);
-
-      if (response && !response.error) {
-        // Cadastro foi bem-sucedido
-        console.log('Empresa cadastrada com sucesso:', response);
-        alert('Cadastro realizado com sucesso!');
-      } else {
-        // Houve algum erro vindo do back-end
-        console.error('Erro ao cadastrar:', response.error);
-        alert('Erro ao cadastrar: ' + response.error);
-      }
-    } catch (error) {
-      // Erro de rede ou exceção
-      console.error('Erro ao salvar empresa:', error);
-      alert('Erro inesperado ao salvar');
-    }
+    // Remove o toast após o delay
+    setTimeout(() => {
+      setToastMessages(prev => prev.filter(toast => toast.id !== newToast.id));
+    }, delay);
   };
 
   const setUpToastMessage = async (toastMessage, toastStrong, toastVariant) => {
@@ -258,17 +179,28 @@ const AppForm = ({
   const fetchSave = async (data) => {
     try {
       setLoading(false);
-
+      console.log('Dados enviados:', data);
       const response = await EmpresaService.postSave(data);
       // console.log('Resposta do postFilter:', response);
+      console.log('Resposta do backend:', response);
 
-      setUpFormHeader('Erro ao salvar os Dados', 'danger');
+      if (
+        response.status === 'erro' &&
+        response.id === 0 &&
+        response.affectedRows === 0
+      ) {
+        setUpFormHeader('Erro ao salvar os Dados', 'danger');
+        addToast('Erro', 'Erro ao salvar os Dados', 'danger', 5000);
+      }
 
-      setUpFormHeader('Dados salvos com sucesso', 'success');
-
-      setUpToastMessage('Origem salvo com sucesso!', 'Sucesso', 'success');
-
-      setUpToastMessage('Erro ao salvar os Dados', 'Erro', 'danger');
+      if (
+        response.status === 'success' &&
+        response.id > 0 &&
+        response.affectedRows > 0
+      ) {
+        setUpFormHeader('Dados salvos com sucesso', 'success');
+        addToast('Sucesso', 'Contato salvo com sucesso!', 'success', 3000);
+      }
 
       if (response.length > 0) {
         setLista(response);
@@ -282,115 +214,42 @@ const AppForm = ({
     }
   };
 
-  const carregarToken = async () => {
-    const resultado = await EmpresaService.getEndPoint();
-    if (resultado && resultado.token_csrf) {
-      setTokenCsrf(resultado.token_csrf);
-    } else {
-      alert('Erro ao obter token CSRF.');
-    }
-  };
-
   const registerform = async () => {
+    const updateData = await fetchGetById();
+    console.log('updateData :: ', updateData);
 
-    if (getID) {
-      const updateData = await fetchGetById(getID);
-      console.log('updateData :: ', updateData);
+    if (updateData) {
+      let dadosIniciais = {
+        token_csrf: token_csrf || 'erro',
+        id: updateData.id || '',
+        pro_origem_id: updateData.cad_pro_origem_id || '4',
+        tipo: updateData.cad_tipo || '',
+        active: updateData.cad_active || 'Y',
+        sigla_pronome_tratamento: updateData.cad_sigla_pronome_tratamento || '',
+        nome: updateData.cad_nome || '',
+        cnpj_cpf: updateData.cad_cnpj_cpf || '',
+        remember_token: updateData.cad_remember_token || token_csrf,
+        created_by: updateData.cad_created_by || '0',
+        created_by_name: updateData.cad_created_by_name || 'unknown',
+        updated_by: updateData.cad_updated_by || '0',
+        updated_by_name: updateData.cad_updated_by_name || 'unknown',
 
-      if (updateData) {
-        let dadosIniciais = {
-          token_csrf: token_csrf || 'erro',
-          id: updateData.id || '',
-          cad_pro_origem_id: updateData.cad_pro_origem_id || '',
-          cad_tipo: updateData.cad_tipo || '',
-          cad_active: updateData.cad_active || 'Y',
-          cad_sigla_pronome_tratamento: updateData.cad_sigla_pronome_tratamento || '',
-          cad_nome: updateData.cad_nome || '',
-          cad_cnpj_cpf: updateData.cad_cnpj_cpf || '',
-          cad_remember_token: updateData.cad_remember_token || token_csrf,
-          cad_created_by: updateData.cad_created_by || '0',
-          cad_created_by_name: updateData.cad_created_by_name || 'unknown',
-          cad_updated_by: updateData.cad_updated_by || '0',
-          cad_updated_by_name: updateData.cad_updated_by_name || 'unknown',
+        created_at: updateData.created_at || '',
+        updated_at: updateData.updated_at || '',
+        deleted_at: updateData.deleted_at || null
+      };
+      reset(dadosIniciais);
+      setShowUpdateData(updateData);
 
-          orig_id: updateData.orig_id || '4',
-          orig_created_by: updateData.orig_created_by || '0',
-          orig_created_by_name: updateData.orig_created_by_name || 'unknown',
-          orig_updated_by: updateData.orig_updated_by || '0',
-          orig_updated_by_name: updateData.orig_updated_by_name || 'unknown',
-
-          mail_favorito: updateData.mail_favorito || 'Y',
-          mail_cadastro_id: updateData.mail_cadastro_id || '',
-          mail_created_by: updateData.mail_created_by || '0',
-          mail_created_by_name: updateData.mail_created_by_name || 'unknown',
-          mail_updated_by: updateData.mail_updated_by || '0',
-          mail_updated_by_name: updateData.mail_updated_by_name || 'unknown',
-
-          tel_favorito: updateData.tel_favorito || 'Y',
-          tel_cadastro_id: updateData.tel_cadastro_id || '',
-          tel_created_by: updateData.tel_created_by || '0',
-          tel_created_by_name: updateData.tel_created_by_name || 'unknown',
-          tel_updated_by: updateData.tel_updated_by || '0',
-          tel_updated_by_name: updateData.tel_updated_by_name || 'unknown',
-
-          end_favorito: updateData.end_favorito || 'Y',
-          end_created_by: updateData.end_created_by || '0',
-          end_created_by_name: updateData.end_created_by_name || 'unknown',
-          end_updated_by: updateData.end_updated_by || '0',
-          end_updated_by_name: updateData.end_updated_by_name || 'unknown',
-
-          created_at: updateData.created_at || '',
-          updated_at: updateData.updated_at || '',
-          deleted_at: updateData.deleted_at || null
-        };
-        reset(dadosIniciais);
-      }
     } else {
-      reset({
+      let dadosIniciais = {
+        remember_token: token_csrf,
         token_csrf: token_csrf,
-        id: '',
-        cad_pro_origem_id: '',
-        cad_tipo: '',
-        cad_active: '',
-        cad_sigla_pronome_tratamento: '',
-        cad_nome: '',
-        cad_cnpj_cpf: '',
-        cad_remember_token: '',
-        cad_created_by: '',
-        cad_created_by_name: '',
-        cad_updated_by: '',
-        cad_updated_by_name: '',
+        pro_origem_id: '4',
+        tipo: '',
+      };
+      reset(dadosIniciais);
 
-        orig_id: '',
-        orig_created_by: '',
-        orig_created_by_name: '',
-        orig_updated_by: '',
-        orig_updated_by_name: '',
-
-        mail_favorito: '',
-        mail_cadastro_id: '',
-        mail_created_by: '',
-        mail_created_by_name: '',
-        mail_updated_by: '',
-        mail_updated_by_name: '',
-
-        tel_favorito: '',
-        tel_cadastro_id: '',
-        tel_created_by: '',
-        tel_created_by_name: '',
-        tel_updated_by: '',
-        tel_updated_by_name: '',
-
-        end_favorito: '',
-        end_created_by: '',
-        end_created_by_name: '',
-        end_updated_by: '',
-        end_updated_by_name: '',
-
-        created_at: '',
-        updated_at: '',
-        deleted_at: ''
-      });
     }
   };
 
@@ -424,7 +283,7 @@ const AppForm = ({
       }
 
       if (value !== cnpjCpfValue) {
-        setValue('cad_cnpj_cpf', value);
+        setValue('cnpj_cpf', value);
       }
     }
 
@@ -446,7 +305,6 @@ const AppForm = ({
       console.log('#useEffect finalizado');
     }
 
-    carregarToken();
 
   }, []);
 
@@ -506,47 +364,47 @@ const AppForm = ({
     }
 
     // Limpar erro específico quando o campo é alterado
-    if (errors.cad_cnpj_cpf) {
+    if (errors.cnpj_cpf) {
       setErrors({
         ...errors,
-        cad_cnpj_cpf: null
+        cnpj_cpf: null
       });
     }
   };
 
-  const renderCampoSelectOrigem = () => {
-    return (
-      <>
-        <label htmlFor="formOrigem" className="form-label">Origem*</label>
-        <select
-          className={`form-select ${errors.pro_origem_id ? 'is-invalid' : ''}`}
-          id="formOrigem"
-          {...register('cad_pro_origem_id', { required: 'Origem é obrigatório' })}
-        >
-          <option value="">Selecione...</option>
-          {origens.map((origem) => (
-            <option key={origem.id} value={origem.id}>
-              {origem.descricao}
-            </option>
-          ))}
-        </select>
-        {errors.cad_pro_origem_id && (
-          <div className="invalid-feedback">
-            {errors.cad_pro_origem_id.message}
-          </div>
-        )}
-      </>
-    );
-  };
+  // const renderCampoSelectOrigem = () => {
+  //   return (
+  //     <>
+  //       <label htmlFor="formOrigem" className="form-label">Origem*</label>
+  //       <select
+  //         className={`form-select ${errors.pro_origem_id ? 'is-invalid' : ''}`}
+  //         id="formOrigem"
+  //         {...register('pro_origem_id', { required: 'Origem é obrigatório' })}
+  //       >
+  //         <option value="">Selecione...</option>
+  //         {origens.map((ori, index) => (
+  //           <option key={index} value={ori.pro_origem_id}>
+  //             {ori.descricao}
+  //           </option>
+  //         ))}
+  //       </select>
+  //       {errors.pro_origem_id && (
+  //         <div className="invalid-feedback">
+  //           {errors.pro_origem_id.message}
+  //         </div>
+  //       )}
+  //     </>
+  //   );
+  // };
 
   const renderCampoTipo = () => {
     return (
       <>
         <label htmlFor="formTipo" className="form-label">Tipo*</label>
         <select
-          className={`form-select ${errors.cad_tipo ? 'is-invalid' : ''}`}
+          className={`form-select ${errors.tipo ? 'is-invalid' : ''}`}
           id="formTipo"
-          {...register('cad_tipo', { required: 'Tipo é obrigatório' })}
+          {...register('tipo', { required: 'Tipo é obrigatório' })}
         >
           <option value="">Selecione o tipo</option>
           <option value="Cliente">Cliente</option>
@@ -571,7 +429,7 @@ const AppForm = ({
           className="form-control"
           id="formSigla"
           maxLength={10}
-          {...register('cad_sigla_pronome_tratamento')}
+          {...register('sigla_pronome_tratamento')}
         />
       </>
     );
@@ -583,13 +441,13 @@ const AppForm = ({
         <label htmlFor="formNome" className="form-label">Nome/Razão Social*</label>
         <input
           type="text"
-          className={`form-control ${errors.cad_nome ? 'is-invalid' : ''}`}
+          className={`form-control ${errors.nome ? 'is-invalid' : ''}`}
           id="formNome"
-          {...register('cad_nome', { required: 'Nome é obrigatório' })}
+          {...register('nome', { required: 'Nome é obrigatório' })}
         />
-        {errors.cad_nome && (
+        {errors.nome && (
           <div className="invalid-feedback">
-            {errors.cad_nome.message}
+            {errors.nome.message}
           </div>
         )}
       </>
@@ -599,15 +457,22 @@ const AppForm = ({
   const renderCampoAtivo = () => {
     return (
       <>
-        <label htmlFor="formActive" className="form-label">Ativo</label>
-        <select
-          className="form-select"
-          id="formActive"
-          {...register('cad_active')}
-        >
-          <option value="Y">Sim</option>
-          <option value="N">Não</option>
-        </select>
+        <div className="form-group">
+          <label htmlFor="formActive" className="form-label">Ativo *</label>
+          <select
+            className={`form-select ${errors.active ? 'is-invalid' : ''}`}
+            id="formActive"
+            {...register('active', { required: 'Ativo é obrigatório' })}
+          >
+            <option value="Y">Sim</option>
+            <option value="N">Não</option>
+          </select>
+          {errors.active && (
+            <div className="invalid-feedback">
+              {errors.active.message}
+            </div>
+          )}
+        </div>
       </>
     );
   };
@@ -618,11 +483,11 @@ const AppForm = ({
         <label htmlFor="formCnpjCpf" className="form-label">CNPJ/CPF*</label>
         <input
           type="text"
-          className={`form-control ${errors.cad_cnpj_cpf ? 'is-invalid' : ''}`}
+          className={`form-control ${errors.cnpj_cpf ? 'is-invalid' : ''}`}
           onSubmit={handleCnpjCpfChange}
           id="formCnpjCpf"
           placeholder="000.000.000-00 ou 00.000.000/0000-00"
-          {...register('cad_cnpj_cpf', {
+          {...register('cnpj_cpf', {
             required: 'CNPJ/CPF é obrigatório',
             validate: {
               validFormat: (value) => {
@@ -643,156 +508,144 @@ const AppForm = ({
             }
           })}
         />
-        {errors.cad_cnpj_cpf && (
+        {errors.cnpj_cpf && (
           <div className="invalid-feedback">
-            {errors.cad_cnpj_cpf.message}
+            {errors.cnpj_cpf.message}
           </div>
         )}
       </>
     );
   };
 
-  const renderCampoEmail = () => {
-    return (
-      <>
-        <label htmlFor="formEmail" className="form-label">Email</label>
-        <input
-          type="email"
-          className="form-control"
-          id="formEmail"
-          {...register('mail_email')}
-        />
-      </>
-    );
-  };
+  // const renderCampoEmail = () => {
+  //   return (
+  //     <>
+  //       <label htmlFor="formEmail" className="form-label">Email</label>
+  //       <input
+  //         type="email"
+  //         className="form-control"
+  //         id="formEmail"
+  //         {...register('mail_email')}
+  //       />
+  //     </>
+  //   );
+  // };
 
-  const renderCampoNumero = () => {
-    return (
-      <>
-        <label htmlFor="formNumero" className="form-label">Telefone</label>
-        <input
-          type="text"
-          className="form-control"
-          id="formNumero"
-          {...register('tel_numero')}
-        />
-      </>
-    );
-  }
+  // const renderCampoNumero = () => {
+  //   return (
+  //     <>
+  //       <label htmlFor="formNumero" className="form-label">Telefone</label>
+  //       <input
+  //         type="text"
+  //         className="form-control"
+  //         id="formNumero"
+  //         {...register('tel_numero')}
+  //       />
+  //     </>
+  //   );
+  // }
 
-  const renderCampoTelTipo = () => {
-    return (
-      <>
-        <label htmlFor="formTelTipo" className="form-label">Tipo Telefone</label>
-        <input
-          type="text"
-          className="form-control"
-          id="formTelTipo"
-          {...register('tel_tipo')}
-        />
-      </>
-    );
-  };
+  // const renderCampoTelTipo = () => {
+  //   return (
+  //     <>
+  //       <label htmlFor="formTelTipo" className="form-label">Tipo Telefone</label>
+  //       <input
+  //         type="text"
+  //         className="form-control"
+  //         id="formTelTipo"
+  //         {...register('tel_tipo')}
+  //       />
+  //     </>
+  //   );
+  // };
 
-  const renderCampoCEP = () => {
-    return (
-      <>
-        <label htmlFor="formCEP" className="form-label">CEP</label>
-        <input
-          type="number"
-          className="form-control"
-          id="formCEP"
-          {...register('end_cep')}
-        />
-      </>
-    );
-  };
+  // const renderCampoCEP = () => {
+  //   return (
+  //     <>
+  //       <label htmlFor="formCEP" className="form-label">CEP</label>
+  //       <input
+  //         type="number"
+  //         className="form-control"
+  //         id="formCEP"
+  //         {...register('end_cep')}
+  //       />
+  //     </>
+  //   );
+  // };
 
-  const renderCampoLogadouro = () => {
-    return (
-      <>
-        <label htmlFor="formLogradouro" className="form-label">Logradouro</label>
-        <input
-          type="text"
-          className="form-control"
-          id="formLogradouro"
-          {...register('end_logradouro')}
-        />
-      </>
-    );
-  };
+  // const renderCampoLogadouro = () => {
+  //   return (
+  //     <>
+  //       <label htmlFor="formLogradouro" className="form-label">Logradouro</label>
+  //       <input
+  //         type="text"
+  //         className="form-control"
+  //         id="formLogradouro"
+  //         {...register('end_logradouro')}
+  //       />
+  //     </>
+  //   );
+  // };
 
-  const renderCampoEndNumero = () => {
-    return (
-      <>
-        <label htmlFor="formEndNumero" className="form-label">Número</label>
-        <input
-          type="text"
-          className="form-control"
-          id="formEndNumero"
-          {...register('end_numero')}
-        />
-      </>
-    );
-  };
+  // const renderCampoEndNumero = () => {
+  //   return (
+  //     <>
+  //       <label htmlFor="formEndNumero" className="form-label">Número</label>
+  //       <input
+  //         type="text"
+  //         className="form-control"
+  //         id="formEndNumero"
+  //         {...register('end_numero')}
+  //       />
+  //     </>
+  //   );
+  // };
 
-  const renderCampoBairro = () => {
-    return (
-      <>
-        <label htmlFor="formBairro" className="form-label">Bairro</label>
-        <input
-          type="text"
-          className="form-control"
-          id="formBairro"
-          {...register('end_bairro')}
-        />
-      </>
-    );
-  };
+  // const renderCampoBairro = () => {
+  //   return (
+  //     <>
+  //       <label htmlFor="formBairro" className="form-label">Bairro</label>
+  //       <input
+  //         type="text"
+  //         className="form-control"
+  //         id="formBairro"
+  //         {...register('end_bairro')}
+  //       />
+  //     </>
+  //   );
+  // };
 
-  const renderCampoCidade = () => {
-    return (
-      <>
-        <label htmlFor="formCidade" className="form-label">Cidade</label>
-        <input
-          type="text"
-          className="form-control"
-          id="formCidade"
-          {...register('end_cidade')}
-        />
-      </>
-    );
-  }
+  // const renderCampoCidade = () => {
+  //   return (
+  //     <>
+  //       <label htmlFor="formCidade" className="form-label">Cidade</label>
+  //       <input
+  //         type="text"
+  //         className="form-control"
+  //         id="formCidade"
+  //         {...register('end_cidade')}
+  //       />
+  //     </>
+  //   );
+  // }
 
-  const renderCampoEstado = () => {
-    return (
-      <>
-        <label htmlFor="formEstado" className="form-label">Estado</label>
-        <input
-          type="text"
-          className="form-control"
-          id="formEstado"
-          {...register('end_estado')}
-        />
-      </>
-    );
-  };
+  // const renderCampoEstado = () => {
+  //   return (
+  //     <>
+  //       <label htmlFor="formEstado" className="form-label">Estado</label>
+  //       <input
+  //         type="text"
+  //         className="form-control"
+  //         id="formEstado"
+  //         {...register('end_estado')}
+  //       />
+  //     </>
+  //   );
+  // };
 
   const renderRowLogForm = () => {
     return (
       <div className="row mb-3">
-        <div className="col-md-3">
-          <div className="form-group">
-            <label htmlFor="formToken" className="form-label">Token</label>
-            <input
-              type="text"
-              className="form-control font-monospace"
-              id="formToken"
-              disabled
-              {...register('cad_remember_token')}
-            />
-          </div>
-        </div>
         <div className="col-md-3">
           <div className="form-group">
             <label htmlFor="formCreatedBy" className="form-label">Criado por</label>
@@ -801,7 +654,7 @@ const AppForm = ({
               className="form-control bg-secondary"
               id="formCreatedBy"
               disabled
-              {...register('cad_created_by_name')}
+              {...register('created_by_name')}
             />
           </div>
         </div>
@@ -825,7 +678,7 @@ const AppForm = ({
               className="form-control bg-secondary"
               id="formUpdatedBy"
               disabled
-              {...register('cad_updated_by_name')}
+              {...register('updated_by_name')}
             />
           </div>
         </div>
@@ -908,7 +761,7 @@ const AppForm = ({
                 }}
               >
 
-                <div className="row mb-4">
+                {/* <div className="row mb-4">
                   <div className="form-group">
                     <input
                       type="hidden"
@@ -943,50 +796,51 @@ const AppForm = ({
                       {...register('end_favorito')}
                     />
                   </div>
-                </div>
+                </div> */}
 
                 <div className="row mb-3">
-                  <div className="col-md-4">
-                    {/* CAMPO SECRETARIA */}
+                  {/* <div className="col-md-4">
+                    {/* CAMPO SECRETARIA 
                     {renderCampoSelectOrigem()}
-                  </div>
+                  </div> */}
                   <div className="col-md-4">
-                    {/* CAMPO SEI */}
-                    {renderCampoTipo()}
-                  </div>
-                  <div className="col-md-4">
-                    {/* CAMPO DATA INÍCIO */}
-                    {renderCampoSigla()}
-                  </div>
-                </div>
-
-                <div className="row mb-3">
-                  <div className="col-md-4">
-                    {/* CAMPO DATA FIM */}
+                    {/* CAMPO NOME */}
                     {renderCampoNome()}
                   </div>
                   <div className="col-md-4">
-                    {/* CAMPO SECRETARIA */}
+                    {/* CAMPO SIGLA */}
+                    {renderCampoSigla()}
+                  </div>
+                  <div className="col-md-4">
+                    {/* CAMPO TIPO*/}
+                    {renderCampoTipo()}
+                  </div>
+                </div>
+
+                <div className="row mb-3">
+                  
+                  <div className="col-md-4">
+                    {/* CAMPO ATIVO */}
                     {renderCampoAtivo()}
                   </div>
                   <div className="col-md-4">
-                    {/* CAMPO SEI */}
+                    {/* CAMPO CPF/CNPJ */}
                     {renderCampoCPF_CNPJ()}
                   </div>
                 </div>
 
 
-                <div className="row mb-3">
+                {/* <div className="row mb-3">
                   <div className="col-md-4">
-                    {/* CAMPO DATA INÍCIO */}
+                    {/* CAMPO DATA INÍCIO 
                     {renderCampoEmail()}
                   </div>
                   <div className="col-md-4">
-                    {/* CAMPO DATA FIM */}
+                    {/* CAMPO DATA FIM 
                     {renderCampoNumero()}
                   </div>
                   <div className="col-md-4">
-                    {/* CAMPO SECRETARIA */}
+                    {/* CAMPO SECRETARIA 
                     {renderCampoTelTipo()}
                   </div>
                 </div>
@@ -994,33 +848,33 @@ const AppForm = ({
 
                 <div className="row mb-3">
                   <div className="col-md-4">
-                    {/* CAMPO SEI */}
+                    {/* CAMPO SEI 
                     {renderCampoCEP()}
                   </div>
                   <div className="col-md-4">
-                    {/* CAMPO DATA INÍCIO */}
+                    {/* CAMPO DATA INÍCIO
                     {renderCampoLogadouro()}
                   </div>
                   <div className="col-md-4">
-                    {/* CAMPO DATA FIM */}
+                    {/* CAMPO DATA FIM
                     {renderCampoEndNumero()}
                   </div>
                 </div>
 
                 <div className="row mb-3">
                   <div className="col-md-4">
-                    {/* CAMPO SECRETARIA */}
+                    {/* CAMPO SECRETARIA
                     {renderCampoBairro()}
                   </div>
                   <div className="col-md-4">
-                    {/* CAMPO SEI */}
+                    {/* CAMPO SEI
                     {renderCampoCidade()}
                   </div>
                   <div className="col-md-4">
-                    {/* CAMPO DATA INÍCIO */}
+                    {/* CAMPO DATA INÍCIO
                     {renderCampoEstado()}
                   </div>
-                </div>
+                </div> */}
 
                 {/* ROW DADOS DE LOG */}
                 {renderRowLogForm()}
